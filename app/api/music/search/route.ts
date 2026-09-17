@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server"; import { searchApple } from "@/lib/music/apple"; import { searchSpotify } from "@/lib/music/spotify";
+export async function GET(req:Request){ const q=new URL(req.url).searchParams.get("q")?.trim()??""; if(q.length<2) return NextResponse.json({tracks:[]}); try{ try{return NextResponse.json({tracks:await searchSpotify(q),source:"spotify"});}catch{return NextResponse.json({tracks:await searchApple(q),source:"apple"});} }catch(e){return NextResponse.json({error:e instanceof Error?e.message:"Busca indisponível."},{status:502});}}

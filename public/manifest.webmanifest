@@ -1,0 +1,11 @@
+{
+  "name": "AUX",
+  "short_name": "aux.",
+  "description": "Música, ligada à vida.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f7f5",
+  "theme_color": "#f7f7f5",
+  "icons": [{"src":"/icon.svg","sizes":"any","type":"image/svg+xml"}],
+  "share_target": {"action":"/new","method":"GET","params":{"title":"title","text":"text","url":"url"}}
+}

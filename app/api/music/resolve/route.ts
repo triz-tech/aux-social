@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server"; import { resolveMusicUrl } from "@/lib/music/resolver";
+export async function POST(req:Request){ try{ const {url}=await req.json(); if(typeof url!=="string"||url.length>2000) return NextResponse.json({error:"Link inválido."},{status:400}); return NextResponse.json({track:await resolveMusicUrl(url)}); }catch(e){return NextResponse.json({error:e instanceof Error?e.message:"Não consegui resolver essa música."},{status:422});}}
