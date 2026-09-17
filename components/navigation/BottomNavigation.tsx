@@ -17,7 +17,6 @@ import { createClient } from "@/lib/supabase/client";
 
 export default function BottomNavigation() {
   const pathname = usePathname();
-
   const [createOpen, setCreateOpen] = useState(false);
   const [profileHref, setProfileHref] = useState(
     IS_DEMO ? "/u/demo" : "/login"
@@ -34,7 +33,6 @@ export default function BottomNavigation() {
     async function loadMyProfile() {
       try {
         const supabase = createClient();
-
         const {
           data: { user },
         } = await supabase.auth.getUser();
@@ -53,25 +51,21 @@ export default function BottomNavigation() {
           .maybeSingle();
 
         if (error) throw error;
-
         if (!mounted) return;
 
-        if (profile?.username) {
-          setProfileHref(`/u/${profile.username}`);
-        } else {
-          setProfileHref("/onboarding");
-        }
+        setProfileHref(
+          profile?.username
+            ? `/u/${profile.username}`
+            : "/onboarding"
+        );
       } catch {
-        if (mounted) {
-          setProfileHref("/login");
-        }
+        if (mounted) setProfileHref("/login");
       }
     }
 
     void loadMyProfile();
 
     const supabase = createClient();
-
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(() => {
@@ -86,17 +80,12 @@ export default function BottomNavigation() {
 
   return (
     <>
-      <nav
-        className="bottomNav"
-        aria-label="Navegação principal"
-      >
+      <nav className="bottomNav" aria-label="Navegação principal">
         <Link
-          className={`navItem ${
-            pathname === "/" ? "active" : ""
-          }`}
+          className={`navItem ${pathname === "/" ? "active" : ""}`}
           href="/"
         >
-          <Home size={20} />
+          <Home size={21} strokeWidth={1.8} />
           <span>Home</span>
         </Link>
 
@@ -106,7 +95,7 @@ export default function BottomNavigation() {
           }`}
           href="/discover"
         >
-          <Compass size={20} />
+          <Compass size={21} strokeWidth={1.8} />
           <span>Discover</span>
         </Link>
 
@@ -115,7 +104,7 @@ export default function BottomNavigation() {
           aria-label="Adicionar música"
           onClick={() => setCreateOpen(true)}
         >
-          <Plus size={25} />
+          <Plus size={30} strokeWidth={1.8} />
         </button>
 
         <Link
@@ -124,7 +113,7 @@ export default function BottomNavigation() {
           }`}
           href="/activity"
         >
-          <Activity size={20} />
+          <Activity size={21} strokeWidth={1.8} />
           <span>Activity</span>
         </Link>
 
@@ -134,7 +123,7 @@ export default function BottomNavigation() {
           }`}
           href={profileHref}
         >
-          <UserRound size={20} />
+          <UserRound size={21} strokeWidth={1.8} />
           <span>Profile</span>
         </Link>
       </nav>

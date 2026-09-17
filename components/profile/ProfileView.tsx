@@ -1,8 +1,12 @@
 "use client";
 
 import {
+  Check,
+  Copy,
+  ImageIcon,
   Pencil,
   Share2,
+  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
@@ -16,6 +20,7 @@ import type {
 } from "@/types";
 
 import PostCard from "@/components/post/PostCard";
+import { shareProfileStory } from "@/components/share/profileStory";
 
 import { IS_DEMO } from "@/lib/config";
 import { createClient } from "@/lib/supabase/client";
@@ -46,6 +51,15 @@ export default function ProfileView({
 
   const [tab, setTab] =
     useState<Tab>("All");
+
+  const [shareOpen, setShareOpen] =
+    useState(false);
+
+  const [shareBusy, setShareBusy] =
+    useState(false);
+
+  const [shareMessage, setShareMessage] =
+    useState("");
 
   const [follow, setFollow] =
     useState(
@@ -166,25 +180,97 @@ export default function ProfileView({
    * ======================================================
    */
 
-  async function share() {
-    const url =
-      location.href;
+  function profileUrl() {
+    return `${location.origin}/u/${profile.username}`;
+  }
 
-    if (
-      navigator.share
-    ) {
-      await navigator.share({
-        title:
-          `@${profile.username} · aux.`,
-        url,
-      });
+  async function shareProfileCard() {
+    setShareBusy(true);
+    setShareMessage("");
 
-      return;
+    try {
+      const result =
+        await shareProfileStory(
+          profile,
+          rotation
+        );
+
+      if (result === "shared") {
+        setShareMessage(
+          "pronto para compartilhar."
+        );
+      } else {
+        setShareMessage(
+          "card do perfil salvo."
+        );
+      }
+    } catch (error) {
+      if (
+        error instanceof DOMException &&
+        error.name === "AbortError"
+      ) {
+        return;
+      }
+
+      setShareMessage(
+        error instanceof Error
+          ? error.message
+          : "não consegui criar o card."
+      );
+    } finally {
+      setShareBusy(false);
     }
+  }
 
-    await navigator.clipboard.writeText(
-      url
-    );
+  async function shareProfileLink() {
+    const url = profileUrl();
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title:
+            `@${profile.username} · aux.`,
+          url,
+        });
+
+        return;
+      }
+
+      await navigator.clipboard.writeText(
+        url
+      );
+
+      setShareMessage(
+        "link do perfil copiado."
+      );
+    } catch (error) {
+      if (
+        error instanceof DOMException &&
+        error.name === "AbortError"
+      ) {
+        return;
+      }
+
+      setShareMessage(
+        "não consegui compartilhar o link."
+      );
+    }
+  }
+
+  async function copyProfileLink() {
+    try {
+      await navigator.clipboard.writeText(
+        profileUrl()
+      );
+
+      setShareMessage(
+        "link do perfil copiado."
+      );
+    } catch {
+      setShareMessage(
+        "não consegui copiar o link."
+      );
+    }
   }
 
   /*
@@ -325,9 +411,10 @@ export default function ProfileView({
             className="pill"
             aria-label="Compartilhar perfil"
             title="Compartilhar perfil"
-            onClick={() =>
-              void share()
-            }
+            onClick={() => {
+              setShareMessage("");
+              setShareOpen(true);
+            }}
             style={{
               width: 42,
               height: 42,
@@ -743,6 +830,227 @@ export default function ProfileView({
           </div>
         )}
       </section>
+
+      {shareOpen && (
+        <div
+          role="presentation"
+          onClick={() =>
+            setShareOpen(false)
+          }
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 90,
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+            background:
+              "rgba(0,0,0,.30)",
+            backdropFilter:
+              "blur(3px)",
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-label="Compartilhar perfil"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+            style={{
+              position: "relative",
+              width:
+                "min(100%, 620px)",
+              padding:
+                "10px 18px calc(28px + var(--safe))",
+              borderRadius:
+                "30px 30px 0 0",
+              background: "#fbfbfa",
+              boxShadow:
+                "0 -20px 80px rgba(0,0,0,.18)",
+            }}
+          >
+            <div
+              style={{
+                width: 38,
+                height: 5,
+                margin:
+                  "2px auto 20px",
+                borderRadius: 99,
+                background: "#d2d2d2",
+              }}
+            />
+
+            <button
+              type="button"
+              aria-label="Fechar"
+              onClick={() =>
+                setShareOpen(false)
+              }
+              style={{
+                position: "absolute",
+                top: 20,
+                right: 18,
+                width: 42,
+                height: 42,
+                padding: 0,
+                border: 0,
+                borderRadius: "50%",
+                background:
+                  "transparent",
+                color: "#666",
+                display: "grid",
+                placeItems: "center",
+              }}
+            >
+              <X size={21} />
+            </button>
+
+            <div
+              style={{
+                padding:
+                  "2px 52px 16px",
+                textAlign: "center",
+              }}
+            >
+              <div
+                className="brand"
+                style={{
+                  fontSize: 28,
+                }}
+              >
+                aux.
+              </div>
+
+              <h2
+                style={{
+                  margin:
+                    "9px 0 4px",
+                  fontSize: 24,
+                  letterSpacing:
+                    "-0.04em",
+                }}
+              >
+                compartilhar perfil
+              </h2>
+
+              <p
+                className="subtle"
+                style={{
+                  margin: 0,
+                  fontSize: 14,
+                }}
+              >
+                @{profile.username}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="choice"
+              disabled={shareBusy}
+              onClick={() =>
+                void shareProfileCard()
+              }
+            >
+              <span className="choiceIcon">
+                <ImageIcon
+                  size={27}
+                />
+              </span>
+
+              <div>
+                <strong>
+                  Card do perfil
+                </strong>
+                <span>
+                  sua rotação em formato
+                  de Story
+                </span>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              className="choice"
+              disabled={shareBusy}
+              onClick={() =>
+                void shareProfileLink()
+              }
+            >
+              <span className="choiceIcon">
+                <Share2 size={27} />
+              </span>
+
+              <div>
+                <strong>
+                  Compartilhar link
+                </strong>
+                <span>
+                  envie o perfil pelo
+                  menu do celular
+                </span>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              className="choice"
+              disabled={shareBusy}
+              onClick={() =>
+                void copyProfileLink()
+              }
+            >
+              <span className="choiceIcon">
+                {shareMessage ===
+                "link do perfil copiado." ? (
+                  <Check size={27} />
+                ) : (
+                  <Copy size={27} />
+                )}
+              </span>
+
+              <div>
+                <strong>
+                  Copiar link
+                </strong>
+                <span>
+                  copie o endereço de
+                  @{profile.username}
+                </span>
+              </div>
+            </button>
+
+            {shareBusy && (
+              <p
+                className="subtle"
+                style={{
+                  margin:
+                    "14px 0 0",
+                  textAlign: "center",
+                  fontSize: 13,
+                }}
+              >
+                criando seu card...
+              </p>
+            )}
+
+            {shareMessage &&
+              !shareBusy && (
+                <div
+                  className="success"
+                  style={{
+                    marginTop: 12,
+                    textAlign:
+                      "center",
+                  }}
+                >
+                  {shareMessage}
+                </div>
+              )}
+          </section>
+        </div>
+      )}
     </main>
   );
 }

@@ -5,6 +5,8 @@ import {
   Images,
   Link2,
   Search,
+  Star,
+  ImagePlus,
 } from "lucide-react";
 import {
   useEffect,
@@ -311,57 +313,107 @@ export default function MusicComposer() {
 
       let trackId: string;
 
+      /*
+       * A mesma música pode aparecer em quantas publicações
+       * forem necessárias. `tracks` guarda uma única ficha da
+       * música; cada Review/Memory cria um novo post apontando
+       * para essa ficha.
+       *
+       * Não usamos upsert aqui: quando a track já existia, o
+       * Supabase tentava atualizá-la e a RLS bloqueava o UPDATE.
+       */
+
       if (track.provider_track_id) {
         const {
-          data,
-          error: trackError,
+          data: existingTrack,
+          error: findTrackError,
         } = await supabase
           .from("tracks")
-          .upsert(
-            {
-              provider: track.provider,
+          .select("id")
+          .eq("provider", track.provider)
+          .eq(
+            "provider_track_id",
+            track.provider_track_id
+          )
+          .maybeSingle();
 
+        if (findTrackError) {
+          throw new Error(
+            `tracks: ${findTrackError.message}`
+          );
+        }
+
+        if (existingTrack) {
+          trackId = existingTrack.id;
+        } else {
+          const {
+            data: newTrack,
+            error: insertTrackError,
+          } = await supabase
+            .from("tracks")
+            .insert({
+              provider: track.provider,
               provider_track_id:
                 track.provider_track_id,
-
               title: track.title,
               artist: track.artist,
               album: track.album,
-
               artwork_url:
                 track.artwork_url,
-
               source_url:
                 track.source_url,
-
               spotify_url:
-                track.spotify_url,
-
+                track.spotify_url ?? null,
               apple_music_url:
-                track.apple_music_url,
-
+                track.apple_music_url ?? null,
               deezer_url:
-                track.deezer_url,
-
+                track.deezer_url ?? null,
               duration_ms:
-                track.duration_ms,
-            },
-            {
-              onConflict:
-                "provider,provider_track_id",
+                track.duration_ms ?? null,
+            })
+            .select("id")
+            .single();
+
+          /*
+           * Se duas pessoas criarem a mesma track exatamente
+           * ao mesmo tempo, a UNIQUE pode ganhar a corrida.
+           * Nesse caso, apenas buscamos a ficha que venceu.
+           */
+          if (
+            insertTrackError &&
+            insertTrackError.code === "23505"
+          ) {
+            const {
+              data: racedTrack,
+              error: racedTrackError,
+            } = await supabase
+              .from("tracks")
+              .select("id")
+              .eq("provider", track.provider)
+              .eq(
+                "provider_track_id",
+                track.provider_track_id
+              )
+              .single();
+
+            if (racedTrackError) {
+              throw new Error(
+                `tracks: ${racedTrackError.message}`
+              );
             }
-          )
-          .select("id")
-          .single();
 
-        if (trackError) {
-          throw trackError;
+            trackId = racedTrack.id;
+          } else if (insertTrackError) {
+            throw new Error(
+              `tracks: ${insertTrackError.message}`
+            );
+          } else {
+            trackId = newTrack.id;
+          }
         }
-
-        trackId = data.id;
       } else {
         const {
-          data,
+          data: newTrack,
           error: trackError,
         } = await supabase
           .from("tracks")
@@ -370,10 +422,8 @@ export default function MusicComposer() {
             title: track.title,
             artist: track.artist,
             album: track.album,
-
             artwork_url:
               track.artwork_url,
-
             source_url:
               track.source_url,
           })
@@ -381,10 +431,12 @@ export default function MusicComposer() {
           .single();
 
         if (trackError) {
-          throw trackError;
+          throw new Error(
+            `tracks: ${trackError.message}`
+          );
         }
 
-        trackId = data.id;
+        trackId = newTrack.id;
       }
 
       /*
@@ -420,7 +472,9 @@ export default function MusicComposer() {
         .single();
 
       if (postError) {
-        throw postError;
+        throw new Error(
+          `posts: ${postError.message}`
+        );
       }
 
       /*
@@ -473,7 +527,9 @@ export default function MusicComposer() {
             );
 
           if (uploadError) {
-            throw uploadError;
+            throw new Error(
+              `storage: ${uploadError.message}`
+            );
           }
 
           /*
@@ -506,7 +562,9 @@ export default function MusicComposer() {
             .single();
 
           if (mediaError) {
-            throw mediaError;
+            throw new Error(
+              `post_media: ${mediaError.message}`
+            );
           }
 
           /*
@@ -551,7 +609,9 @@ export default function MusicComposer() {
         .single();
 
       if (profileError) {
-        throw profileError;
+        throw new Error(
+          `profile: ${profileError.message}`
+        );
       }
 
       /*
@@ -870,7 +930,7 @@ export default function MusicComposer() {
                         .value
                     )
                   }
-                  placeholder="Spotify, Apple Music ou Deezer"
+                  placeholder="Spotify, Apple Music, Deezer ou YouTube"
                   inputMode="url"
                 />
 
@@ -996,8 +1056,8 @@ export default function MusicComposer() {
               setPostType("review")
             }
           >
-            <span className="choiceIcon">
-              ★
+            <span className="choiceIcon" aria-hidden="true">
+              <Star size={25} strokeWidth={1.8} />
             </span>
 
             <div>
@@ -1018,8 +1078,8 @@ export default function MusicComposer() {
               setPostType("memory")
             }
           >
-            <span className="choiceIcon">
-              ◎
+            <span className="choiceIcon" aria-hidden="true">
+              <ImagePlus size={25} strokeWidth={1.8} />
             </span>
 
             <div>
