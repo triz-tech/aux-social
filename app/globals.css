@@ -1517,3 +1517,2114 @@ textarea.field {
     margin: 8px 0;
   }
 }
+
+
+/* =========================================================
+   AUX — PHASE 4 / LIGHT + DARK THEME
+   Cole este bloco NO FINAL de app/globals.css.
+   ========================================================= */
+
+:root {
+  color-scheme: light;
+
+  --bg: #ffffff;
+  --surface: rgba(255, 255, 255, 0.88);
+  --surface-solid: #ffffff;
+
+  --text: #151513;
+  --muted: #74746f;
+  --line: rgba(0, 0, 0, 0.075);
+
+  --soft: #f4f4f1;
+  --soft-2: #ecece8;
+
+  --floating:
+    rgba(250, 250, 248, 0.88);
+
+  --input-bg: #ffffff;
+
+  --button-dark: #151513;
+  --button-dark-text: #ffffff;
+
+  --shadow:
+    0 18px 56px
+    rgba(0, 0, 0, 0.08);
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #11110f;
+  --surface:
+    rgba(27, 27, 24, 0.88);
+  --surface-solid: #1a1a17;
+
+  --text: #f3f2ec;
+  --muted: #a7a69f;
+  --line:
+    rgba(255, 255, 255, 0.095);
+
+  --soft: #23231f;
+  --soft-2: #2b2b26;
+
+  --floating:
+    rgba(25, 25, 22, 0.88);
+
+  --input-bg: #20201c;
+
+  --button-dark: #f1f0ea;
+  --button-dark-text: #171714;
+
+  --shadow:
+    0 22px 70px
+    rgba(0, 0, 0, 0.32);
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+body {
+  background-image: none !important;
+}
+
+/* ---------- superfícies globais ---------- */
+
+html[data-theme="dark"] .topbar {
+  background:
+    linear-gradient(
+      var(--bg) 70%,
+      transparent
+    );
+}
+
+html[data-theme="dark"] .post,
+html[data-theme="dark"] .trackPreview,
+html[data-theme="dark"] .choice,
+html[data-theme="dark"] .secondary,
+html[data-theme="dark"] .field,
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea {
+  color: var(--text);
+  border-color: var(--line);
+  background: var(--surface-solid);
+}
+
+html[data-theme="dark"] .post {
+  box-shadow:
+    0 1px 0
+      rgba(255, 255, 255, 0.025),
+    0 16px 42px
+      rgba(0, 0, 0, 0.2);
+}
+
+html[data-theme="dark"] .tabs {
+  background:
+    rgba(255, 255, 255, 0.06);
+}
+
+html[data-theme="dark"] .tab.active {
+  color: var(--text);
+  background: var(--soft);
+  box-shadow:
+    0 2px 12px
+      rgba(0, 0, 0, 0.22);
+}
+
+html[data-theme="dark"] .pill {
+  color: var(--text);
+  border-color: var(--line);
+  background:
+    rgba(255, 255, 255, 0.055);
+}
+
+html[data-theme="dark"] .iconBtn {
+  color: #b7b6af;
+}
+
+html[data-theme="dark"] .iconBtn:hover {
+  background:
+    rgba(255, 255, 255, 0.065);
+}
+
+html[data-theme="dark"] .iconBtn.on {
+  color: var(--text);
+}
+
+html[data-theme="dark"] .avatar,
+html[data-theme="dark"] .artwork,
+html[data-theme="dark"] .memorySlide,
+html[data-theme="dark"] .choiceIcon {
+  background: var(--soft-2);
+}
+
+/* ---------- botões ---------- */
+
+html[data-theme="dark"] .primary,
+html[data-theme="dark"] .createBtn {
+  color: var(--button-dark-text);
+  background: var(--button-dark);
+}
+
+html[data-theme="dark"] .secondary {
+  color: var(--text);
+}
+
+/* ---------- navegação ---------- */
+
+.bottomNav {
+  background: var(--floating);
+  border-color:
+    rgba(255, 255, 255, 0.62);
+
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+
+html[data-theme="dark"] .bottomNav {
+  border-color:
+    rgba(255, 255, 255, 0.085);
+
+  box-shadow:
+    0 18px 60px
+      rgba(0, 0, 0, 0.34);
+}
+
+.navItem {
+  color: var(--muted);
+}
+
+.navItem.active {
+  color: var(--text);
+}
+
+/*
+ * No mobile, o seletor fica acima da barra para não
+ * criar uma sexta coluna na navegação.
+ */
+.themeToggle {
+  position: absolute;
+  right: 4px;
+  bottom: calc(100% + 10px);
+
+  min-width: 42px;
+  height: 42px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  padding: 0 11px;
+
+  border: 1px solid var(--line);
+  border-radius: 999px;
+
+  color: var(--text);
+  background: var(--floating);
+
+  box-shadow:
+    0 9px 28px
+      rgba(0, 0, 0, 0.09);
+
+  backdrop-filter:
+    blur(20px)
+    saturate(130%);
+  -webkit-backdrop-filter:
+    blur(20px)
+    saturate(130%);
+
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+
+  cursor: pointer;
+}
+
+html[data-theme="dark"] .themeToggle {
+  box-shadow:
+    0 12px 34px
+      rgba(0, 0, 0, 0.26);
+}
+
+.themeToggle span {
+  display: none;
+}
+
+/* ---------- sheets globais ---------- */
+
+html[data-theme="dark"] .sheet {
+  color: var(--text);
+  background: #191916;
+}
+
+html[data-theme="dark"] .handle {
+  background: #505049;
+}
+
+html[data-theme="dark"] .sheetBackdrop {
+  background:
+    rgba(0, 0, 0, 0.54);
+}
+
+/* ---------- feedback ---------- */
+
+html[data-theme="dark"] .error {
+  color: #ffb7b1;
+  background: #3a201e;
+}
+
+html[data-theme="dark"] .success {
+  color: #bfe1c2;
+  background: #1d3321;
+}
+
+/*
+ * Algumas telas mais antigas ainda possuem branco inline.
+ * Estes seletores cobrem cards de Discover/Activity sem
+ * afetar artwork ou fotos.
+ */
+html[data-theme="dark"] .shell
+  a[style*="background: rgba(255,255,255"],
+html[data-theme="dark"] .shell
+  button[style*="background: rgba(255,255,255"] {
+  color: var(--text) !important;
+  border-color:
+    var(--line) !important;
+  background:
+    var(--surface-solid) !important;
+}
+
+/* ---------- desktop ---------- */
+
+@media (min-width: 900px) {
+  .themeToggle {
+    position: static;
+
+    width: 100%;
+    min-width: 0;
+    height: 42px;
+
+    justify-content:
+      flex-start;
+
+    margin-top: 3px;
+    padding: 0 12px;
+
+    border-radius: 13px;
+
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .themeToggle:hover {
+    background:
+      rgba(0, 0, 0, 0.045);
+  }
+
+  html[data-theme="dark"]
+    .themeToggle:hover {
+    background:
+      rgba(
+        255,
+        255,
+        255,
+        0.065
+      );
+  }
+
+  .themeToggle span {
+    display: inline;
+  }
+}
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+  html,
+  body {
+    transition: none;
+  }
+}
+/* =========================================================
+   AUX — DARK MODE / DISCOVER FIX
+   Cole no FINAL de app/globals.css
+   ========================================================= */
+
+/*
+ * No dark mode, o header sticky precisa esconder o conteúdo
+ * que passa por baixo. O fade transparente estava deixando
+ * pedaços das trends aparecerem atrás do topo.
+ */
+html[data-theme="dark"] .topbar {
+  /*
+   * Mesmo acabamento "fumacinha" do tema claro:
+   * escuro sólido no topo e dissolvendo suavemente no conteúdo.
+   */
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(17, 17, 15, 0.98) 0%,
+      rgba(17, 17, 15, 0.94) 55%,
+      rgba(17, 17, 15, 0.72) 72%,
+      rgba(17, 17, 15, 0.34) 86%,
+      rgba(17, 17, 15, 0) 100%
+    ) !important;
+
+  backdrop-filter:
+    blur(14px)
+    saturate(112%);
+
+  -webkit-backdrop-filter:
+    blur(14px)
+    saturate(112%);
+}
+
+/*
+ * Inputs e placeholders com contraste correto no tema escuro.
+ */
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+  color: #77776f;
+}
+
+/*
+ * Mantém as superfícies do Discover separadas do fundo sem
+ * virar aquele cinza claro lavado.
+ */
+html[data-theme="dark"] .choice {
+  color: var(--text);
+  border-color: var(--line);
+  background:
+    var(--surface-solid);
+}
+
+html[data-theme="dark"] .choiceIcon {
+  color: var(--text);
+  background: var(--soft);
+}
+
+/*
+ * Scroll horizontal das trends sem barra visível.
+ */
+html[data-theme="dark"] .shell {
+  scrollbar-color:
+    #3a3a34 transparent;
+}
+/* =========================================================
+   AUX — DARK PROFILE DESKTOP FINISH
+   Cole no FINAL de app/globals.css
+   ========================================================= */
+
+@media (min-width: 900px) {
+  html[data-theme="dark"] .bottomNav {
+    background:
+      rgba(25, 25, 22, 0.9);
+  }
+
+  html[data-theme="dark"] .navItem {
+    border-radius: 12px;
+  }
+
+  html[data-theme="dark"] .navItem.active {
+    color: var(--text);
+    background:
+      rgba(255, 255, 255, 0.065);
+  }
+
+  /*
+   * Mantém foco de teclado elegante, sem aquele retângulo
+   * branco duro no item Profile.
+   */
+  .navItem:focus {
+    outline: none;
+  }
+
+  .navItem:focus-visible {
+    outline:
+      2px solid
+      rgba(255, 255, 255, 0.42);
+
+    outline-offset: 2px;
+  }
+
+  html[data-theme="dark"] .createBtn {
+    box-shadow:
+      0 10px 28px
+      rgba(0, 0, 0, 0.28);
+  }
+}
+
+/* =========================================================
+   AUX — DISCOVER / DESKTOP ALIGNMENT
+   Cole no FINAL de app/globals.css
+   ========================================================= */
+
+.discoverContent {
+  width: 100%;
+  margin-inline: auto;
+}
+
+@media (min-width: 900px) {
+  /*
+   * Header e conteúdo passam a usar exatamente a mesma coluna.
+   * Antes, topbar tinha max-width próprio, enquanto sections,
+   * results e cards ocupavam outra largura dentro do .shell.
+   */
+  .shell > .topbar,
+  .shell > .discoverContent {
+    width: min(100%, 690px);
+    max-width: 690px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .discoverContent > section,
+  .discoverContent .results,
+  .discoverContent .stack,
+  .discoverContent .searchbar {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+/* =========================================================
+   AUX — DISCOVER DESKTOP / FULL COLUMN ALIGNMENT
+   Cole NO FINAL de app/globals.css.
+   Este bloco substitui o alinhamento de 690px anterior.
+   ========================================================= */
+
+@media (min-width: 900px) {
+  /*
+   * A .shell já reserva o espaço da sidebar com padding-left.
+   * Portanto o conteúdo do Discover deve simplesmente ocupar
+   * 100% da área restante — sem uma segunda centralização.
+   */
+  .shell > .topbar,
+  .shell > .discoverContent {
+    width: 100% !important;
+    max-width: none !important;
+
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /*
+   * Tudo dentro do Discover segue as mesmas bordas do header.
+   */
+  .discoverContent > .pageTitle,
+  .discoverContent > .searchbar,
+  .discoverContent > section,
+  .discoverContent > .results,
+  .discoverContent > .stack {
+    width: 100%;
+    max-width: none;
+  }
+
+  /*
+   * Header: aux. à esquerda e Discover à direita exatamente
+   * nas mesmas linhas dos cards abaixo.
+   */
+  .shell > .topbar {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+
+/* =========================================================
+   AUX — HOME / FEED DARK FINISH
+   Cole no FINAL de app/globals.css
+   ========================================================= */
+
+html[data-theme="dark"] .postHead,
+html[data-theme="dark"] .postBody {
+  color: var(--text);
+}
+
+html[data-theme="dark"] .who strong,
+html[data-theme="dark"] .postText {
+  color: var(--text);
+}
+
+html[data-theme="dark"] .trackline,
+html[data-theme="dark"] .who span {
+  color: var(--muted);
+}
+
+html[data-theme="dark"] .dots {
+  color: #5f5f59;
+}
+
+html[data-theme="dark"] .dots .activeDot {
+  color: #dddcd5;
+}
+
+/*
+ * Os fundos vazios do carrossel não ficam branco/cinza claro
+ * quando a foto usa object-fit: contain.
+ */
+html[data-theme="dark"] .memoryViewport,
+html[data-theme="dark"] .memorySlide {
+  background:
+    var(--soft) !important;
+}
+
+/*
+ * Tabs do feed.
+ */
+html[data-theme="dark"] .tabs {
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.055);
+
+  background:
+    rgba(255, 255, 255, 0.045);
+}
+
+html[data-theme="dark"] .tab {
+  color: var(--muted);
+}
+
+html[data-theme="dark"] .tab.active {
+  color: var(--text);
+
+  background:
+    rgba(255, 255, 255, 0.075);
+
+  box-shadow: none;
+}
+/* =========================================================
+   AUX — ACTIVITY / LIGHT + DARK + DESKTOP
+   Cole no FINAL de app/globals.css
+   ========================================================= */
+
+.activityContent {
+  width: 100%;
+  margin-inline: auto;
+}
+
+.activityList {
+  gap: 9px;
+}
+
+.activityItem {
+  min-height: 76px;
+
+  gap: 12px;
+
+  margin: 0;
+  padding: 11px 13px;
+
+  border:
+    1px solid var(--line);
+
+  border-radius: 20px;
+
+  background:
+    var(--surface-solid);
+
+  box-shadow:
+    0 5px 20px
+    rgba(0, 0, 0, 0.025);
+
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.activityItem .activityIcon {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  min-height: 42px;
+  flex-basis: 42px;
+
+  border-radius: 13px;
+
+  color: var(--muted);
+  background: var(--soft);
+}
+
+.activityMain {
+  min-width: 0;
+  flex: 1;
+
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  color: inherit;
+  text-decoration: none;
+}
+
+.activityMain .avatar {
+  flex: none;
+}
+
+.activityCopy {
+  min-width: 0;
+  flex: 1;
+}
+
+.activityCopy strong {
+  display: block;
+
+  color: var(--text);
+
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.32;
+}
+
+.activityTime {
+  display: block;
+
+  margin-top: 4px;
+
+  color: var(--muted);
+
+  font-size: 10.5px;
+  line-height: 1;
+}
+
+.activityFollow {
+  flex: none;
+}
+
+/*
+ * Cor contextual discreta.
+ * A Activity continua neutra; a cor só ajuda a reconhecer
+ * rapidamente o tipo da notificação.
+ */
+.activityItem[data-type="like"]
+  .activityIcon {
+  color: #b85d68;
+
+  background:
+    rgba(190, 89, 103, 0.09);
+}
+
+.activityItem[data-type="comment"]
+  .activityIcon {
+  color: #6d7897;
+
+  background:
+    rgba(102, 119, 164, 0.09);
+}
+
+.activityItem[data-type="repost"]
+  .activityIcon {
+  color: #5f8f71;
+
+  background:
+    rgba(89, 145, 109, 0.09);
+}
+
+.activityItem[data-type="follow"]
+  .activityIcon {
+  color: #8d70ad;
+
+  background:
+    rgba(137, 103, 176, 0.09);
+}
+
+/* empty state */
+
+.activityEmpty {
+  min-height: 280px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 5px;
+
+  color: var(--text);
+}
+
+.activityEmptyIcon {
+  width: 46px;
+  height: 46px;
+
+  display: grid;
+  place-items: center;
+
+  margin-bottom: 7px;
+
+  border-radius: 50%;
+
+  color: var(--muted);
+  background: var(--soft);
+}
+
+.activityEmpty strong {
+  font-size: 14px;
+  font-weight: 680;
+}
+
+.activityEmpty p {
+  margin: 0;
+
+  color: var(--muted);
+
+  font-size: 11px;
+}
+
+/* =========================================================
+   DARK
+   ========================================================= */
+
+html[data-theme="dark"]
+  .activityItem {
+  border-color:
+    rgba(255, 255, 255, 0.075);
+
+  background:
+    rgba(27, 27, 24, 0.92);
+
+  box-shadow:
+    0 12px 34px
+    rgba(0, 0, 0, 0.16);
+}
+
+html[data-theme="dark"]
+  .activityItem[data-type="like"]
+  .activityIcon {
+  color: #dc8791;
+
+  background:
+    rgba(205, 98, 112, 0.13);
+}
+
+html[data-theme="dark"]
+  .activityItem[data-type="comment"]
+  .activityIcon {
+  color: #9aa8d0;
+
+  background:
+    rgba(112, 132, 184, 0.13);
+}
+
+html[data-theme="dark"]
+  .activityItem[data-type="repost"]
+  .activityIcon {
+  color: #91c3a2;
+
+  background:
+    rgba(92, 159, 115, 0.13);
+}
+
+html[data-theme="dark"]
+  .activityItem[data-type="follow"]
+  .activityIcon {
+  color: #bca0da;
+
+  background:
+    rgba(151, 112, 193, 0.14);
+}
+
+html[data-theme="dark"]
+  .activityEmptyIcon {
+  color: var(--muted);
+
+  background:
+    rgba(255, 255, 255, 0.055);
+}
+
+/* =========================================================
+   DESKTOP
+   Mesma lógica de coluna que acertamos no Discover.
+   ========================================================= */
+
+@media (min-width: 900px) {
+  .activityPage > .topbar,
+  .activityPage > .activityContent {
+    width: 100% !important;
+    max-width: none !important;
+
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .activityPage > .topbar {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .activityItem {
+    min-height: 80px;
+
+    padding:
+      12px 15px;
+
+    border-radius: 21px;
+  }
+}
+
+@media (hover: hover) {
+  .activityItem:hover {
+    transform:
+      translateY(-1px);
+
+    border-color:
+      rgba(0, 0, 0, 0.12);
+
+    box-shadow:
+      0 10px 30px
+      rgba(0, 0, 0, 0.055);
+  }
+
+  html[data-theme="dark"]
+    .activityItem:hover {
+    border-color:
+      rgba(255, 255, 255, 0.13);
+
+    box-shadow:
+      0 14px 38px
+      rgba(0, 0, 0, 0.25);
+  }
+}
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+  .activityItem {
+    transition: none;
+  }
+}
+
+
+/* =========================================================
+   AUX — SETTINGS / DESKTOP CONSISTENCY
+   Cole no FINAL de app/globals.css
+   ========================================================= */
+
+.settingsContent {
+  width: 100%;
+  margin-inline: auto;
+}
+
+.settingsForm {
+  width: 100%;
+  max-width: 520px;
+}
+
+.settingsForm > label {
+  display: grid;
+  gap: 7px;
+}
+
+.settingsForm textarea.field {
+  min-height: 104px;
+  resize: vertical;
+}
+
+/* =========================================================
+   DARK
+   ========================================================= */
+
+html[data-theme="dark"]
+  .settingsPage
+  .field {
+  color: var(--text);
+
+  border-color:
+    rgba(255, 255, 255, 0.09);
+
+  background:
+    var(--input-bg);
+}
+
+html[data-theme="dark"]
+  .settingsPage
+  .field::placeholder {
+  color: #77766f;
+}
+
+html[data-theme="dark"]
+  .settingsPage
+  .secondary {
+  color: var(--text);
+
+  border-color:
+    rgba(255, 255, 255, 0.09);
+
+  background:
+    var(--soft);
+}
+
+html[data-theme="dark"]
+  .settingsPage
+  .primary {
+  color:
+    var(--button-dark-text);
+
+  background:
+    var(--button-dark);
+}
+
+/* =========================================================
+   DESKTOP
+   O header, título e formulário agora pertencem à mesma
+   coluna. O formulário continua mais estreito por conforto,
+   mas não fica perdido para a esquerda.
+   ========================================================= */
+
+@media (min-width: 900px) {
+  .settingsPage > .topbar,
+  .settingsPage > .settingsContent {
+    width: min(100%, 620px) !important;
+    max-width: 620px !important;
+
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .settingsContent > .pageTitle {
+    width: 100%;
+  }
+
+  .settingsForm {
+    max-width: 520px;
+
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Mobile continua ocupando a largura natural da shell. */
+@media (max-width: 899px) {
+  .settingsForm {
+    max-width: none;
+  }
+}
+/* =========================================================
+   AUX — LOGIN / DESKTOP + DARK
+   Cole no FINAL de app/globals.css
+   ========================================================= */
+
+.authPage {
+  min-height: 100dvh;
+
+  display: grid;
+  place-items: center;
+
+  padding-top: 34px;
+}
+
+.authCardAUX {
+  width: min(100%, 430px);
+
+  margin: 0;
+
+  padding: 28px;
+
+  border-color: var(--line);
+
+  background:
+    var(--surface-solid);
+
+  box-shadow:
+    0 24px 70px
+    rgba(0, 0, 0, 0.055);
+}
+
+.authBrand {
+  margin-bottom: 34px;
+}
+
+.authIntro h1 {
+  margin: 0;
+
+  font-size:
+    clamp(34px, 5vw, 42px);
+
+  line-height: 0.98;
+
+  letter-spacing: -0.055em;
+}
+
+.authIntro p {
+  max-width: 330px;
+
+  margin:
+    12px 0 27px;
+
+  color: var(--muted);
+
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.authStack {
+  gap: 12px;
+}
+
+.authFieldGroup {
+  display: grid;
+  gap: 7px;
+}
+
+.authLabel {
+  padding-left: 2px;
+
+  color: var(--muted);
+
+  font-size: 12px;
+  font-weight: 620;
+}
+
+.authCardAUX .field {
+  min-height: 50px;
+
+  color: var(--text);
+
+  border-color: var(--line);
+
+  background:
+    var(--input-bg, #fff);
+}
+
+.authCardAUX .field::placeholder {
+  color: #a09f99;
+}
+
+.authCardAUX .field:focus {
+  border-color:
+    rgba(0, 0, 0, 0.22);
+
+  box-shadow:
+    0 0 0 4px
+    rgba(0, 0, 0, 0.035);
+}
+
+.authPrimary,
+.authSecondary {
+  width: 100%;
+  min-height: 50px;
+}
+
+.authPrimary {
+  margin-top: 5px;
+}
+
+.authForgot {
+  display: block;
+
+  padding: 2px 0 4px;
+
+  color: var(--muted);
+
+  text-align: center;
+  text-decoration: none;
+
+  font-size: 12.5px;
+
+  transition:
+    color 150ms ease;
+}
+
+.authForgot:hover {
+  color: var(--text);
+}
+
+.authDivider {
+  display: grid;
+  grid-template-columns:
+    1fr auto 1fr;
+  align-items: center;
+
+  gap: 10px;
+
+  margin: 2px 0;
+}
+
+.authDivider span {
+  height: 1px;
+
+  background: var(--line);
+}
+
+.authDivider small {
+  color: var(--muted);
+
+  font-size: 11px;
+}
+
+.authMessage {
+  border-radius: 14px;
+
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+/* =========================================================
+   DARK
+   ========================================================= */
+
+html[data-theme="dark"]
+  .authCardAUX {
+  border-color:
+    rgba(255, 255, 255, 0.085);
+
+  background:
+    rgba(27, 27, 24, 0.94);
+
+  box-shadow:
+    0 28px 90px
+    rgba(0, 0, 0, 0.30);
+}
+
+html[data-theme="dark"]
+  .authCardAUX
+  .field {
+  color: var(--text);
+
+  border-color:
+    rgba(255, 255, 255, 0.095);
+
+  background:
+    var(--input-bg);
+}
+
+html[data-theme="dark"]
+  .authCardAUX
+  .field::placeholder {
+  color: #74736d;
+}
+
+html[data-theme="dark"]
+  .authCardAUX
+  .field:focus {
+  border-color:
+    rgba(255, 255, 255, 0.22);
+
+  box-shadow:
+    0 0 0 4px
+    rgba(255, 255, 255, 0.035);
+}
+
+html[data-theme="dark"]
+  .authCardAUX
+  .primary {
+  color:
+    var(--button-dark-text);
+
+  background:
+    var(--button-dark);
+}
+
+html[data-theme="dark"]
+  .authCardAUX
+  .secondary {
+  color: var(--text);
+
+  border-color:
+    rgba(255, 255, 255, 0.09);
+
+  background:
+    rgba(255, 255, 255, 0.05);
+}
+
+/* =========================================================
+   DESKTOP
+   ========================================================= */
+
+@media (min-width: 900px) {
+  .authPage {
+    /*
+     * A shell já reserva a sidebar.
+     * O card fica centralizado na área útil
+     * em vez de parecer jogado para a esquerda.
+     */
+    min-height: 100dvh;
+
+    padding-top: 32px;
+    padding-bottom: 32px;
+  }
+
+  .authCardAUX {
+    width: min(100%, 440px);
+
+    padding: 34px;
+
+    border-radius: 30px;
+  }
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 899px) {
+  .authPage {
+    align-items: start;
+
+    min-height: 100dvh;
+
+    padding-top:
+      max(42px, env(safe-area-inset-top));
+  }
+
+  .authCardAUX {
+    width: 100%;
+
+    padding: 24px 20px;
+
+    border: 0;
+
+    border-radius: 0;
+
+    background: transparent;
+
+    box-shadow: none;
+  }
+
+  .authBrand {
+    margin-bottom: 42px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .authForgot {
+    transition: none;
+  }
+}
+/* =========================================================
+   AUX — ONBOARDING / DESKTOP + DARK
+   Cole no FINAL de app/globals.css
+   ========================================================= */
+
+.onboardingCard {
+  width: min(100%, 460px);
+}
+
+.onboardingTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 16px;
+
+  margin-bottom: 34px;
+}
+
+.onboardingStep {
+  padding: 8px 11px;
+
+  border: 1px solid var(--line);
+  border-radius: 999px;
+
+  color: var(--muted);
+  background: var(--soft);
+
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.onboardingIntro p {
+  max-width: 350px;
+}
+
+.onboardingStack {
+  gap: 13px;
+}
+
+.onboardingBio {
+  min-height: 96px !important;
+}
+
+.onboardingCount {
+  justify-self: end;
+
+  margin-top: -2px;
+
+  color: var(--muted);
+
+  font-size: 10.5px;
+}
+
+.usernameStatus {
+  min-height: 18px;
+
+  padding: 1px 3px 0;
+
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.usernameAvailable {
+  color: #39734d;
+}
+
+.usernameTaken {
+  color: #b42318;
+}
+
+.avatarPicker {
+  min-height: 58px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 14px;
+
+  cursor: pointer;
+
+  text-align: left;
+}
+
+.avatarPicker > span {
+  flex: none;
+
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.avatarPicker > small {
+  min-width: 0;
+
+  overflow: hidden;
+
+  color: var(--muted);
+
+  font-size: 10.5px;
+  font-weight: 500;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.onboardingError {
+  border-radius: 14px;
+
+  font-size: 12.5px;
+}
+
+.onboardingPrimary {
+  width: 100%;
+  min-height: 50px;
+
+  margin-top: 3px;
+}
+
+/* =========================================================
+   DARK
+   ========================================================= */
+
+html[data-theme="dark"]
+  .onboardingStep {
+  color: var(--muted);
+
+  border-color:
+    rgba(255, 255, 255, 0.075);
+
+  background:
+    rgba(255, 255, 255, 0.05);
+}
+
+html[data-theme="dark"]
+  .usernameAvailable {
+  color: #8fc7a5;
+}
+
+html[data-theme="dark"]
+  .usernameTaken {
+  color: #e5968e;
+}
+
+html[data-theme="dark"]
+  .avatarPicker {
+  color: var(--text);
+
+  border-color:
+    rgba(255, 255, 255, 0.09);
+
+  background:
+    rgba(255, 255, 255, 0.05);
+}
+
+html[data-theme="dark"]
+  .avatarPicker:hover {
+  background:
+    rgba(255, 255, 255, 0.075);
+}
+
+/* =========================================================
+   DESKTOP
+   ========================================================= */
+
+@media (min-width: 900px) {
+  .onboardingPage {
+    min-height: 100dvh;
+
+    display: grid;
+    place-items: center;
+
+    padding-top: 32px;
+    padding-bottom: 32px;
+  }
+
+  .onboardingCard {
+    width: min(100%, 460px);
+
+    padding: 34px;
+
+    border-radius: 30px;
+  }
+}
+
+/* =========================================================
+   MOBILE — 390 x 844 friendly
+   ========================================================= */
+
+@media (max-width: 899px) {
+  .onboardingPage {
+    min-height: 100dvh;
+
+    align-items: start;
+
+    padding-top:
+      max(
+        42px,
+        env(safe-area-inset-top)
+      );
+  }
+
+  .onboardingCard {
+    width: 100%;
+
+    padding: 24px 20px;
+
+    border: 0;
+    border-radius: 0;
+
+    background: transparent;
+
+    box-shadow: none;
+  }
+
+  .onboardingTop {
+    margin-bottom: 40px;
+  }
+
+  .avatarPicker {
+    min-height: 60px;
+  }
+}
+
+@media (max-width: 390px) {
+  .onboardingCard {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .avatarPicker {
+    align-items: flex-start;
+    flex-direction: column;
+
+    gap: 4px;
+  }
+
+  .avatarPicker > small {
+    max-width: 100%;
+  }
+}
+
+/* =========================================================
+   AUX — CREATE SHEET / DARK MODE
+   Cole no FINAL de app/globals.css
+   ========================================================= */
+
+html[data-theme="dark"] .sheetBackdrop {
+  background:
+    rgba(0, 0, 0, 0.50);
+
+  backdrop-filter:
+    blur(12px);
+
+  -webkit-backdrop-filter:
+    blur(12px);
+}
+
+html[data-theme="dark"] .sheet {
+  color: var(--text);
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.085);
+
+  border-bottom: 0;
+
+  background:
+    rgba(25, 25, 22, 0.985);
+
+  box-shadow:
+    0 -30px 100px
+    rgba(0, 0, 0, 0.46);
+}
+
+html[data-theme="dark"] .sheet .handle {
+  background:
+    rgba(255, 255, 255, 0.20);
+}
+
+html[data-theme="dark"] .sheetClose {
+  color: var(--muted);
+}
+
+html[data-theme="dark"] .sheetClose:hover {
+  color: var(--text);
+
+  background:
+    rgba(255, 255, 255, 0.07);
+}
+
+html[data-theme="dark"] .sheetHeader .brand {
+  color: var(--text);
+}
+
+html[data-theme="dark"] .sheetHeader p {
+  color: var(--muted);
+}
+
+/*
+ * As três portas do composer:
+ * ouvir / colar link / buscar.
+ */
+html[data-theme="dark"] .createChoices .choice {
+  color: var(--text);
+
+  border-color:
+    rgba(255, 255, 255, 0.075);
+
+  background:
+    rgba(255, 255, 255, 0.045);
+
+  box-shadow: none;
+}
+
+html[data-theme="dark"] .createChoices .choice:hover {
+  border-color:
+    rgba(255, 255, 255, 0.13);
+
+  background:
+    rgba(255, 255, 255, 0.07);
+
+  box-shadow:
+    0 10px 32px
+    rgba(0, 0, 0, 0.16);
+}
+
+html[data-theme="dark"]
+  .createChoices
+  .choice
+  .choiceIcon {
+  color: #d1d0c9;
+
+  background:
+    rgba(255, 255, 255, 0.065);
+}
+
+html[data-theme="dark"]
+  .createChoices
+  .choice
+  strong {
+  color: var(--text);
+}
+
+html[data-theme="dark"]
+  .createChoices
+  .choice
+  .choiceCopy
+  > span {
+  color: var(--muted);
+}
+
+@media (min-width: 760px) {
+  html[data-theme="dark"] .sheet {
+    border-bottom:
+      1px solid
+      rgba(255, 255, 255, 0.085);
+
+    /*
+     * No desktop o CreateSheet vira um modal central,
+     * coerente com Comments e Share.
+     */
+    width:
+      min(
+        560px,
+        calc(100vw - 56px)
+      );
+
+    border-radius: 30px;
+  }
+}
+
+/* =========================================================
+   AUX — DESKTOP LAYOUT / FINAL ALIGNMENT
+   #1 Centralização consistente no desktop
+
+   Regra:
+   - 900–1119px: preserva espaço seguro para a sidebar.
+   - 1120px+: conteúdo principal fica realmente centralizado
+     na viewport e a sidebar se posiciona à esquerda dele.
+   ========================================================= */
+
+:root {
+  --aux-desktop-content: 690px;
+  --aux-desktop-nav: 180px;
+  --aux-desktop-gap: 28px;
+}
+
+/*
+ * Desktop mais estreito:
+ * ainda há sidebar, então a coluna usa o espaço restante
+ * sem ficar por baixo da navegação.
+ */
+@media (min-width: 900px) and (max-width: 1119px) {
+  .shell {
+    width:
+      min(
+        var(--aux-desktop-content),
+        calc(100% - 236px)
+      );
+
+    margin-left: 216px;
+    margin-right: auto;
+
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .bottomNav {
+    left: 18px;
+  }
+
+  .shell:not(.settingsPage):not(.authPage)
+    > .topbar,
+  .shell > .feed,
+  .shell > .hero,
+  .shell > .discoverContent,
+  .activityPage > .topbar,
+  .activityPage > .activityContent {
+    width: 100% !important;
+    max-width: none !important;
+
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
+
+/*
+ * Desktop confortável:
+ * a coluna de 690px é centralizada na tela.
+ *
+ * A sidebar não participa mais da largura da .shell;
+ * ela fica imediatamente à esquerda da coluna principal.
+ */
+@media (min-width: 1120px) {
+  .shell {
+    width:
+      min(
+        calc(100% - 48px),
+        var(--aux-desktop-content)
+      );
+
+    margin-left: auto;
+    margin-right: auto;
+
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .bottomNav {
+    left:
+      max(
+        18px,
+        calc(
+          50% -
+          (
+            var(--aux-desktop-content) / 2
+          ) -
+          var(--aux-desktop-gap) -
+          var(--aux-desktop-nav)
+        )
+      );
+  }
+
+  /*
+   * Home, Discover e Activity compartilham
+   * exatamente as mesmas bordas visuais.
+   */
+  .shell:not(.settingsPage):not(.authPage)
+    > .topbar,
+  .shell > .feed,
+  .shell > .hero,
+  .shell > .discoverContent,
+  .activityPage > .topbar,
+  .activityPage > .activityContent {
+    width: 100% !important;
+    max-width: none !important;
+
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /*
+   * Settings continua propositalmente mais estreito,
+   * mas agora é centralizado DENTRO da mesma coluna.
+   */
+  .settingsPage > .topbar,
+  .settingsPage > .settingsContent {
+    width: min(100%, 620px) !important;
+    max-width: 620px !important;
+
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  /*
+   * Login e onboarding não herdam mais aquele
+   * padding-left de 220px da versão antiga da shell.
+   */
+  .authPage {
+    width:
+      min(
+        calc(100% - 48px),
+        var(--aux-desktop-content)
+      );
+
+    margin-left: auto;
+    margin-right: auto;
+
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+/* =========================================================
+   AUX — SURFACES / FINAL LIGHT CONSISTENCY
+   #2 Unificar tons de branco
+
+   O app passa a trabalhar com papéis, não com vários
+   "quase brancos" independentes:
+   --bg      = canvas da página
+   --surface = superfície translúcida/flutuante
+   --card    = cards, campos e superfícies sólidas
+   --soft    = áreas neutras internas
+   ========================================================= */
+
+:root {
+  --bg: #ffffff;
+
+  --surface:
+    rgba(255, 255, 255, 0.88);
+
+  --surface-solid: #ffffff;
+  --card: #ffffff;
+
+  --soft: #f4f4f1;
+  --soft-2: #ecece8;
+}
+
+html[data-theme="dark"] {
+  --bg: #11110f;
+
+  --surface:
+    rgba(27, 27, 24, 0.88);
+
+  --surface-solid: #1a1a17;
+  --card: #1a1a17;
+
+  --soft: #23231f;
+  --soft-2: #2b2b26;
+}
+
+/*
+ * Canvas único.
+ * Remove qualquer gradiente/bege antigo que ainda pudesse
+ * reaparecer por cascata.
+ */
+html,
+body {
+  background-color: var(--bg);
+}
+
+body {
+  background-image: none !important;
+}
+
+/*
+ * Superfícies sólidas do produto.
+ * Todas passam a usar o mesmo token.
+ */
+.post,
+.reviewContent,
+.trackPreview,
+.choice,
+.field,
+.secondary,
+.authCard {
+  background-color: var(--card);
+}
+
+/* Estados selecionados continuam sólidos, sem "outro branco". */
+.tab.active {
+  background-color: var(--card);
+}
+
+/*
+ * Áreas internas neutras não fingem ser um segundo canvas.
+ * Elas usam explicitamente o token soft.
+ */
+.avatar,
+.artwork,
+.reviewArtwork,
+.photoThumb,
+.choiceIcon {
+  background-color: var(--soft);
+}
+
+/*
+ * Carrossel da Memory:
+ * quando a imagem usa contain, a área vazia segue o mesmo
+ * neutro do restante da interface.
+ */
+.memoryViewport,
+.memorySlide {
+  background-color: var(--soft);
+}
+
+/*
+ * Elementos flutuantes continuam translúcidos de propósito:
+ * navegação, pill e sheets usam tokens próprios, em vez de
+ * novos valores de branco espalhados pelo arquivo.
+ */
+.bottomNav {
+  background-color: var(--floating);
+}
+
+.pill {
+  border-color: var(--line);
+  background-color: var(--surface);
+}
+
+/*
+ * Dark mode continua usando os mesmos PAPÉIS.
+ * O tema muda os tokens; o componente não escolhe uma cor
+ * diferente por conta própria.
+ */
+html[data-theme="dark"] .post,
+html[data-theme="dark"] .reviewContent,
+html[data-theme="dark"] .trackPreview,
+html[data-theme="dark"] .choice,
+html[data-theme="dark"] .field,
+html[data-theme="dark"] .secondary,
+html[data-theme="dark"] .authCard {
+  background-color: var(--card);
+}
+
+html[data-theme="dark"] .avatar,
+html[data-theme="dark"] .artwork,
+html[data-theme="dark"] .reviewArtwork,
+html[data-theme="dark"] .photoThumb,
+html[data-theme="dark"] .choiceIcon,
+html[data-theme="dark"] .memoryViewport,
+html[data-theme="dark"] .memorySlide {
+  background-color: var(--soft);
+}
+
+/* =========================================================
+   AUX — SPACING SYSTEM / FINAL CONSISTENCY
+   #15 Consistência geral de espaçamento
+
+   Mantém o visual já aprovado e transforma os espaçamentos
+   principais em um sistema único para as telas do AUX.
+   ========================================================= */
+
+:root {
+  --aux-page-x: 18px;
+  --aux-page-top: 22px;
+  --aux-page-bottom:
+    calc(108px + var(--safe));
+
+  --aux-section-gap: 24px;
+  --aux-card-gap: 18px;
+  --aux-stack-gap: 11px;
+
+  --aux-title-gap-top: 22px;
+  --aux-title-gap-bottom: 22px;
+
+  --aux-control-radius: 16px;
+  --aux-card-radius: 30px;
+}
+
+/* ---------- eixo principal ---------- */
+
+.shell {
+  padding-top: var(--aux-page-top);
+  padding-right: var(--aux-page-x);
+  padding-bottom: var(--aux-page-bottom);
+  padding-left: var(--aux-page-x);
+}
+
+/*
+ * Cabeçalhos usam sempre as mesmas bordas internas.
+ * O conteúdo abaixo começa no mesmo eixo.
+ */
+.topbar {
+  width: 100%;
+
+  padding:
+    10px 2px
+    18px;
+}
+
+/* ---------- títulos e seções ---------- */
+
+.pageTitle {
+  margin:
+    var(--aux-title-gap-top)
+    0
+    var(--aux-title-gap-bottom);
+}
+
+.sectionTitle {
+  margin:
+    var(--aux-section-gap)
+    2px
+    12px;
+}
+
+/* ---------- listas e stacks ---------- */
+
+.feed {
+  gap: var(--aux-card-gap);
+}
+
+.stack {
+  gap: var(--aux-stack-gap);
+}
+
+.results {
+  gap: 10px;
+}
+
+.searchbar {
+  margin:
+    8px 0
+    18px;
+}
+
+/*
+ * Wrappers criados durante a revisão final passam a ocupar
+ * exatamente a coluna da página, sem eixos próprios.
+ */
+.discoverContent,
+.activityContent,
+.settingsContent {
+  width: 100%;
+}
+
+/* ---------- componentes base ---------- */
+
+.field,
+.primary,
+.secondary {
+  border-radius:
+    var(--aux-control-radius);
+}
+
+.post {
+  border-radius:
+    var(--aux-card-radius);
+}
+
+/* ---------- mobile ---------- */
+
+@media (max-width: 899px) {
+  :root {
+    --aux-page-x: 18px;
+    --aux-page-top: 22px;
+    --aux-page-bottom:
+      calc(118px + var(--safe));
+
+    --aux-section-gap: 22px;
+    --aux-card-gap: 16px;
+
+    --aux-title-gap-top: 20px;
+    --aux-title-gap-bottom: 18px;
+  }
+
+  /*
+   * Auth tem sua própria composição mobile e não precisa
+   * reservar o espaço da bottom navigation.
+   */
+  .authPage {
+    padding-bottom:
+      calc(
+        28px +
+        env(
+          safe-area-inset-bottom,
+          0px
+        )
+      );
+  }
+
+  /*
+   * Feed, Discover e Activity mantêm ritmo igual sem mexer
+   * no tamanho específico dos cards de Review/Memory.
+   */
+  .feed,
+  .discoverContent,
+  .activityContent {
+    width: 100%;
+  }
+}
+
+/* ---------- desktop ---------- */
+
+@media (min-width: 900px) {
+  :root {
+    --aux-page-top: 22px;
+    --aux-page-bottom: 48px;
+
+    --aux-section-gap: 26px;
+    --aux-card-gap: 18px;
+  }
+
+  /*
+   * A centralização final (#1) já controla a largura.
+   * Aqui removemos apenas padding horizontal duplicado.
+   */
+  .shell {
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .shell > .topbar,
+  .shell > .hero,
+  .shell > .feed,
+  .shell > .discoverContent,
+  .activityPage > .activityContent {
+    box-sizing: border-box;
+  }
+}
+

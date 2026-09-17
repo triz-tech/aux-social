@@ -1,0 +1,544 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9100;
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  background:
+    rgba(20, 20, 18, 0.34);
+
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.sheet {
+  width: min(100%, 520px);
+
+  padding:
+    8px
+    16px
+    max(
+      18px,
+      env(safe-area-inset-bottom)
+    );
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.72);
+
+  border-bottom: 0;
+
+  border-radius:
+    30px 30px 0 0;
+
+  background:
+    rgba(250, 249, 246, 0.985);
+
+  box-shadow:
+    0 -30px 90px
+    rgba(0, 0, 0, 0.18);
+}
+
+.handle {
+  width: 38px;
+  height: 4px;
+
+  margin:
+    2px auto 11px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(20, 20, 20, 0.22);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content:
+    space-between;
+
+  gap: 12px;
+
+  padding:
+    2px 2px 15px;
+}
+
+.header > div > span {
+  display: block;
+
+  margin-bottom: 3px;
+
+  color: #777771;
+
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.header h2 {
+  margin: 0;
+
+  color: #171715;
+
+  font-size: 25px;
+  font-weight: 720;
+  letter-spacing: -0.035em;
+}
+
+.closeButton {
+  width: 36px;
+  height: 36px;
+
+  display: grid;
+  place-items: center;
+
+  border: 0;
+  border-radius: 50%;
+
+  color: #33332f;
+  background:
+    rgba(0, 0, 0, 0.045);
+
+  cursor: pointer;
+}
+
+.track {
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  padding: 10px;
+
+  border:
+    1px solid
+    rgba(0, 0, 0, 0.055);
+
+  border-radius: 18px;
+
+  background:
+    rgba(255, 255, 255, 0.68);
+}
+
+.track img,
+.artworkFallback {
+  width: 52px;
+  height: 52px;
+
+  flex: none;
+
+  overflow: hidden;
+
+  border-radius: 12px;
+
+  object-fit: cover;
+
+  background: #e9e9e5;
+}
+
+.artworkFallback {
+  display: grid;
+  place-items: center;
+
+  color: #777771;
+
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.track > div:last-child {
+  min-width: 0;
+}
+
+.track strong,
+.track span {
+  display: block;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.track strong {
+  color: #20201d;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.track span {
+  margin-top: 3px;
+
+  color: #85857e;
+
+  font-size: 11px;
+}
+
+.options {
+  display: grid;
+
+  gap: 6px;
+
+  margin-top: 13px;
+}
+
+.option {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  min-height: 66px;
+
+  padding:
+    8px 10px;
+
+  border: 0;
+  border-radius: 17px;
+
+  color: #22221f;
+  background: transparent;
+
+  font: inherit;
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    background 0.16s ease,
+    transform 0.16s ease;
+}
+
+.option:hover {
+  background:
+    rgba(0, 0, 0, 0.035);
+}
+
+.option:active {
+  transform: scale(0.99);
+}
+
+.option:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.optionIcon {
+  width: 42px;
+  height: 42px;
+
+  flex: none;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 13px;
+
+  color: #3d3d39;
+
+  background:
+    rgba(0, 0, 0, 0.045);
+}
+
+.optionCopy {
+  min-width: 0;
+
+  display: grid;
+
+  gap: 3px;
+}
+
+.optionCopy strong {
+  color: #242421;
+
+  font-size: 13px;
+  font-weight: 690;
+}
+
+.optionCopy small {
+  color: #8b8b84;
+
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.urlPreview {
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+
+  width: fit-content;
+
+  margin:
+    11px auto 0;
+
+  color: #9a9a93;
+
+  font-size: 9px;
+}
+
+.feedback,
+.error {
+  margin:
+    10px 0 0;
+
+  min-height: 16px;
+
+  text-align: center;
+
+  font-size: 10px;
+  font-weight: 620;
+}
+
+.feedback {
+  color: #676761;
+}
+
+.error {
+  color: #a83a32;
+}
+
+@media (min-width: 760px) {
+  .backdrop {
+    align-items: center;
+
+    padding: 28px;
+  }
+
+  .sheet {
+    border-bottom:
+      1px solid
+      rgba(255, 255, 255, 0.72);
+
+    border-radius: 30px;
+
+    padding-bottom: 20px;
+  }
+
+  .handle {
+    display: none;
+  }
+
+  .header {
+    padding-top: 10px;
+  }
+}
+
+@media (
+  prefers-reduced-motion:
+    reduce
+) {
+  .option {
+    transition: none;
+  }
+}
+
+
+/* =========================================================
+   AUX — SHARE SHEET / DARK MODE
+   ========================================================= */
+
+:global(html[data-theme="dark"]) .backdrop {
+  background:
+    rgba(0, 0, 0, 0.50);
+}
+
+:global(html[data-theme="dark"]) .sheet {
+  color: var(--text);
+
+  border-color:
+    rgba(255, 255, 255, 0.085);
+
+  background:
+    rgba(25, 25, 22, 0.985);
+
+  box-shadow:
+    0 -30px 100px
+    rgba(0, 0, 0, 0.46);
+}
+
+:global(html[data-theme="dark"]) .handle {
+  background:
+    rgba(255, 255, 255, 0.20);
+}
+
+:global(html[data-theme="dark"]) .header > div > span {
+  color: var(--muted);
+}
+
+:global(html[data-theme="dark"]) .header h2 {
+  color: var(--text);
+}
+
+:global(html[data-theme="dark"]) .closeButton {
+  color: var(--muted);
+
+  background:
+    rgba(255, 255, 255, 0.055);
+}
+
+:global(html[data-theme="dark"]) .closeButton:hover {
+  color: var(--text);
+
+  background:
+    rgba(255, 255, 255, 0.09);
+}
+
+:global(html[data-theme="dark"]) .track {
+  border-color:
+    rgba(255, 255, 255, 0.075);
+
+  background:
+    rgba(255, 255, 255, 0.045);
+}
+
+:global(html[data-theme="dark"]) .artworkFallback {
+  color: var(--muted);
+
+  background: var(--soft-2);
+}
+
+:global(html[data-theme="dark"]) .track strong {
+  color: var(--text);
+}
+
+:global(html[data-theme="dark"]) .track span {
+  color: var(--muted);
+}
+
+:global(html[data-theme="dark"]) .option {
+  color: var(--text);
+}
+
+:global(html[data-theme="dark"]) .option:hover {
+  background:
+    rgba(255, 255, 255, 0.055);
+}
+
+:global(html[data-theme="dark"]) .optionIcon {
+  color: #c8c7c0;
+
+  background:
+    rgba(255, 255, 255, 0.06);
+}
+
+:global(html[data-theme="dark"]) .optionCopy strong {
+  color: var(--text);
+}
+
+:global(html[data-theme="dark"]) .optionCopy small,
+:global(html[data-theme="dark"]) .urlPreview {
+  color: var(--muted);
+}
+
+:global(html[data-theme="dark"]) .feedback {
+  color: #a4a39c;
+}
+
+:global(html[data-theme="dark"]) .error {
+  color: #e18a82;
+}
+
+@media (min-width: 760px) {
+  :global(html[data-theme="dark"]) .sheet {
+    border-bottom-color:
+      rgba(255, 255, 255, 0.085);
+  }
+}
+
+/* =========================================================
+   AUX — SHARE SHEET / POSITION STABILITY
+   =========================================================
+   Não depende mais de flexbox para posicionar o modal.
+   O backdrop ocupa a viewport e o sheet recebe coordenadas
+   explícitas. Isso evita saltos de composição no Chrome
+   desktop durante hover/composição do backdrop.
+*/
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+
+  width: 100vw;
+  height: 100dvh;
+
+  display: block;
+
+  overflow: hidden;
+  overscroll-behavior: contain;
+
+  /*
+   * Evita instabilidade de composição do Chrome/Windows
+   * causada pelo blur do backdrop durante hover.
+   */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.sheet {
+  position: absolute;
+
+  left: 50%;
+  bottom: 0;
+
+  width:
+    min(100%, 520px);
+
+  margin: 0;
+
+  transform:
+    translateX(-50%);
+
+  /*
+   * O modal ganha sua própria camada estável.
+   */
+  isolation: isolate;
+  will-change: auto;
+}
+
+@media (min-width: 760px) {
+  .backdrop {
+    padding: 0;
+  }
+
+  .sheet {
+    top: 50%;
+    bottom: auto;
+    left: 50%;
+
+    width:
+      min(
+        520px,
+        calc(100vw - 56px)
+      );
+
+    max-height:
+      calc(100dvh - 56px);
+
+    overflow-y: auto;
+
+    transform:
+      translate(
+        -50%,
+        -50%
+      );
+  }
+}
+
+@media (
+  prefers-reduced-motion:
+    reduce
+) {
+  .sheet {
+    transition: none;
+  }
+}

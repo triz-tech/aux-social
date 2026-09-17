@@ -5,91 +5,30 @@ import {
   LogOut,
   Save,
 } from "lucide-react";
-
 import Image from "next/image";
-
-import {
-  useEffect,
-  useState,
-} from "react";
-
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { IS_DEMO } from "@/lib/config";
 import { createClient } from "@/lib/supabase/client";
-
-type UsernameStatus =
-  | "idle"
-  | "checking"
-  | "current"
-  | "available"
-  | "taken"
-  | "invalid";
-
-function normalizeUsername(
-  value: string
-) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/^@+/, "")
-    .replace(/[^a-z0-9_.]/g, "")
-    .slice(0, 24);
-}
+import TopFiveEditor from "@/components/profile/TopFiveEditor";
 
 export default function Settings() {
   const router = useRouter();
 
-  const [name, setName] =
-    useState("");
-
+  const [name, setName] = useState("");
   const [username, setUsername] =
     useState("");
+  const [bio, setBio] = useState("");
 
-  const [
-    originalUsername,
-    setOriginalUsername,
-  ] = useState("");
+  const [avatarUrl, setAvatarUrl] =
+    useState<string | null>(null);
 
-  const [
-    currentUserId,
-    setCurrentUserId,
-  ] = useState("");
+  const [newAvatar, setNewAvatar] =
+    useState<File | null>(null);
 
-  const [
-    usernameStatus,
-    setUsernameStatus,
-  ] =
-    useState<UsernameStatus>(
-      "idle"
-    );
-
-  const [bio, setBio] =
-    useState("");
-
-  const [
-    avatarUrl,
-    setAvatarUrl,
-  ] =
-    useState<string | null>(
-      null
-    );
-
-  const [
-    newAvatar,
-    setNewAvatar,
-  ] =
-    useState<File | null>(
-      null
-    );
-
-  const [
-    avatarPreview,
-    setAvatarPreview,
-  ] =
-    useState<string | null>(
-      null
-    );
+  const [avatarPreview, setAvatarPreview] =
+    useState<string | null>(null);
 
   const [loading, setLoading] =
     useState(true);
@@ -97,9 +36,7 @@ export default function Settings() {
   const [saving, setSaving] =
     useState(false);
 
-  const [msg, setMsg] =
-    useState("");
-
+  const [msg, setMsg] = useState("");
   const [error, setError] =
     useState("");
 
@@ -113,9 +50,6 @@ export default function Settings() {
     if (IS_DEMO) {
       setName("bia");
       setUsername("bia");
-      setOriginalUsername(
-        "bia"
-      );
 
       setBio(
         "música, memória e opiniões excessivamente específicas."
@@ -147,51 +81,32 @@ export default function Settings() {
         return;
       }
 
-      setCurrentUserId(
-        user.id
-      );
-
       const {
         data,
         error: profileError,
-      } =
-        await supabase
-          .from("profiles")
-          .select(
-            `
-              display_name,
-              username,
-              bio,
-              avatar_url
-            `
-          )
-          .eq(
-            "id",
-            user.id
-          )
-          .single();
+      } = await supabase
+        .from("profiles")
+        .select(
+          `
+            display_name,
+            username,
+            bio,
+            avatar_url
+          `
+        )
+        .eq("id", user.id)
+        .single();
 
       if (profileError) {
-        throw new Error(
-          profileError.message
-        );
+        throw profileError;
       }
-
-      const loadedUsername =
-        normalizeUsername(
-          data.username ?? ""
-        );
 
       setName(
         data.display_name ?? ""
       );
 
       setUsername(
-        loadedUsername
-      );
-
-      setOriginalUsername(
-        loadedUsername
+        data.username ?? ""
       );
 
       setBio(
@@ -199,12 +114,7 @@ export default function Settings() {
       );
 
       setAvatarUrl(
-        data.avatar_url ??
-          null
-      );
-
-      setUsernameStatus(
-        "current"
+        data.avatar_url ?? null
       );
     } catch (err) {
       setError(
@@ -216,131 +126,6 @@ export default function Settings() {
       setLoading(false);
     }
   }
-
-  /*
-   * =====================================================
-   * VERIFICAR USERNAME ENQUANTO DIGITA
-   * =====================================================
-   */
-
-  useEffect(() => {
-    if (loading) {
-      return;
-    }
-
-    const handle =
-      normalizeUsername(
-        username
-      );
-
-    if (!handle) {
-      setUsernameStatus(
-        "idle"
-      );
-
-      return;
-    }
-
-    if (handle.length < 3) {
-      setUsernameStatus(
-        "invalid"
-      );
-
-      return;
-    }
-
-    /*
-     * Se é o username atual da própria
-     * pessoa, não precisamos consultar
-     * o banco.
-     */
-
-    if (
-      handle ===
-      originalUsername
-    ) {
-      setUsernameStatus(
-        "current"
-      );
-
-      return;
-    }
-
-    const timer =
-      window.setTimeout(
-        async () => {
-          if (IS_DEMO) {
-            setUsernameStatus(
-              "available"
-            );
-
-            return;
-          }
-
-          setUsernameStatus(
-            "checking"
-          );
-
-          try {
-            const supabase =
-              createClient();
-
-            const {
-              data,
-              error:
-                checkError,
-            } =
-              await supabase
-                .from("profiles")
-                .select("id")
-                .eq(
-                  "username",
-                  handle
-                )
-                .maybeSingle();
-
-            if (checkError) {
-              throw checkError;
-            }
-
-            if (
-              data &&
-              data.id !==
-                currentUserId
-            ) {
-              setUsernameStatus(
-                "taken"
-              );
-            } else {
-              setUsernameStatus(
-                "available"
-              );
-            }
-          } catch {
-            /*
-             * Se a verificação visual
-             * falhar, o banco continua
-             * sendo a proteção final.
-             */
-            setUsernameStatus(
-              "idle"
-            );
-          }
-        },
-        450
-      );
-
-    return () => {
-      window.clearTimeout(
-        timer
-      );
-    };
-  }, [
-    username,
-    originalUsername,
-    currentUserId,
-    loading,
-  ]);
 
   /*
    * =====================================================
@@ -401,10 +186,6 @@ export default function Settings() {
    */
 
   async function save() {
-    if (saving) {
-      return;
-    }
-
     setError("");
     setMsg("");
 
@@ -412,9 +193,13 @@ export default function Settings() {
       name.trim();
 
     const cleanUsername =
-      normalizeUsername(
-        username
-      );
+      username
+        .trim()
+        .toLowerCase()
+        .replace(
+          /[^a-z0-9_.]/g,
+          ""
+        );
 
     if (!cleanName) {
       setError(
@@ -424,34 +209,9 @@ export default function Settings() {
       return;
     }
 
-    if (
-      cleanUsername.length <
-      3
-    ) {
+    if (!cleanUsername) {
       setError(
-        "Seu @ precisa ter pelo menos 3 caracteres."
-      );
-
-      return;
-    }
-
-    if (
-      usernameStatus ===
-      "taken"
-    ) {
-      setError(
-        `@${cleanUsername} já está em uso.`
-      );
-
-      return;
-    }
-
-    if (
-      usernameStatus ===
-      "checking"
-    ) {
-      setError(
-        "Só um segundo, estou conferindo esse @."
+        "Escolha um username."
       );
 
       return;
@@ -482,55 +242,12 @@ export default function Settings() {
         );
       }
 
-      /*
-       * Confere novamente imediatamente
-       * antes de salvar.
-       */
-
-      if (
-        cleanUsername !==
-        originalUsername
-      ) {
-        const {
-          data: existing,
-          error:
-            checkError,
-        } =
-          await supabase
-            .from("profiles")
-            .select("id")
-            .eq(
-              "username",
-              cleanUsername
-            )
-            .neq(
-              "id",
-              user.id
-            )
-            .maybeSingle();
-
-        if (checkError) {
-          throw new Error(
-            checkError.message
-          );
-        }
-
-        if (existing) {
-          setUsernameStatus(
-            "taken"
-          );
-
-          throw new Error(
-            `@${cleanUsername} já está em uso.`
-          );
-        }
-      }
-
       let nextAvatarUrl =
         avatarUrl;
 
       /*
-       * NOVA FOTO
+       * Se escolheu uma nova foto,
+       * faz upload primeiro.
        */
 
       if (newAvatar) {
@@ -538,8 +255,7 @@ export default function Settings() {
           (
             newAvatar.name
               .split(".")
-              .pop() ||
-            "jpg"
+              .pop() || "jpg"
           ).replace(
             /[^a-z0-9]/gi,
             ""
@@ -551,8 +267,7 @@ export default function Settings() {
           `${extension}`;
 
         const {
-          error:
-            uploadError,
+          error: uploadError,
         } =
           await supabase.storage
             .from("avatars")
@@ -568,9 +283,7 @@ export default function Settings() {
             );
 
         if (uploadError) {
-          throw new Error(
-            uploadError.message
-          );
+          throw uploadError;
         }
 
         nextAvatarUrl =
@@ -578,78 +291,36 @@ export default function Settings() {
             .from("avatars")
             .getPublicUrl(
               path
-            ).data
-            .publicUrl;
+            ).data.publicUrl;
       }
 
       /*
-       * ATUALIZAR PERFIL
+       * Atualiza o profile.
        */
 
       const {
-        error:
-          profileError,
-      } =
-        await supabase
-          .from("profiles")
-          .update({
-            display_name:
-              cleanName,
+        error: profileError,
+      } = await supabase
+        .from("profiles")
+        .update({
+          display_name:
+            cleanName,
 
-            username:
-              cleanUsername,
+          username:
+            cleanUsername,
 
-            bio:
-              bio.trim() ||
-              null,
+          bio:
+            bio.trim() ||
+            null,
 
-            avatar_url:
-              nextAvatarUrl,
-          })
-          .eq(
-            "id",
-            user.id
-          );
+          avatar_url:
+            nextAvatarUrl,
+        })
+        .eq("id", user.id);
 
       if (profileError) {
-        /*
-         * PostgreSQL 23505:
-         * username duplicado.
-         *
-         * Esta é a proteção final caso
-         * duas pessoas tentem escolher
-         * o mesmo @ simultaneamente.
-         */
-
-        if (
-          profileError.code ===
-          "23505"
-        ) {
-          setUsernameStatus(
-            "taken"
-          );
-
-          throw new Error(
-            `@${cleanUsername} já está em uso.`
-          );
-        }
-
-        throw new Error(
-          profileError.message
-        );
+        throw profileError;
       }
-
-      setUsername(
-        cleanUsername
-      );
-
-      setOriginalUsername(
-        cleanUsername
-      );
-
-      setUsernameStatus(
-        "current"
-      );
 
       setAvatarUrl(
         nextAvatarUrl
@@ -658,9 +329,12 @@ export default function Settings() {
       setNewAvatar(null);
       setAvatarPreview(null);
 
-      setMsg(
-        "perfil salvo."
-      );
+      setMsg("perfil salvo.");
+
+      /*
+       * Se o username mudou,
+       * manda para a URL nova.
+       */
 
       setTimeout(() => {
         router.push(
@@ -692,7 +366,7 @@ export default function Settings() {
         .auth.signOut();
     }
 
-    router.push("/");
+    router.push("/login");
     router.refresh();
   }
 
@@ -722,21 +396,8 @@ export default function Settings() {
     avatarPreview ??
     avatarUrl;
 
-  const handle =
-    normalizeUsername(
-      username
-    );
-
-  const usernameBlocked =
-    usernameStatus ===
-      "taken" ||
-    usernameStatus ===
-      "checking" ||
-    usernameStatus ===
-      "invalid";
-
   return (
-    <main className="shell">
+    <main className="shell settingsPage">
       <header className="topbar">
         <div className="brand">
           aux.
@@ -747,40 +408,34 @@ export default function Settings() {
         </span>
       </header>
 
-      <h1 className="pageTitle">
-        seu perfil.
-      </h1>
+      <div className="settingsContent">
+        <h1 className="pageTitle">
+          seu perfil.
+        </h1>
 
-      <div
-        className="stack"
-        style={{
-          maxWidth: 520,
-        }}
-      >
-        {/* AVATAR */}
+        <div className="stack settingsForm">
+        {/*
+         * ------------------------
+         * AVATAR
+         * ------------------------
+         */}
 
         <div
           style={{
             display: "grid",
-            placeItems:
-              "center",
+            placeItems: "center",
             gap: 12,
-            padding:
-              "8px 0 18px",
+            padding: "8px 0 18px",
           }}
         >
           <div
             style={{
               width: 112,
               height: 112,
-              borderRadius:
-                "50%",
-              overflow:
-                "hidden",
-              background:
-                "#e8e8e8",
-              position:
-                "relative",
+              borderRadius: "50%",
+              overflow: "hidden",
+              background: "var(--soft)",
+              position: "relative",
             }}
           >
             {currentAvatar && (
@@ -804,18 +459,20 @@ export default function Settings() {
             style={{
               display:
                 "inline-flex",
+
               alignItems:
                 "center",
+
               justifyContent:
                 "center",
+
               gap: 8,
+
               cursor:
                 "pointer",
             }}
           >
-            <Camera
-              size={17}
-            />
+            <Camera size={17} />
 
             {currentAvatar
               ? "trocar foto"
@@ -838,7 +495,11 @@ export default function Settings() {
           </label>
         </div>
 
-        {/* NOME */}
+        {/*
+         * ------------------------
+         * DADOS
+         * ------------------------
+         */}
 
         <label>
           <span className="subtle">
@@ -861,8 +522,6 @@ export default function Settings() {
           />
         </label>
 
-        {/* USERNAME */}
-
         <label>
           <span className="subtle">
             username
@@ -873,92 +532,18 @@ export default function Settings() {
             value={username}
             onChange={(
               event
-            ) => {
-              setError("");
-              setMsg("");
-
+            ) =>
               setUsername(
-                normalizeUsername(
-                  event.target
-                    .value
-                )
-              );
-            }}
+                event.target
+                  .value
+              )
+            }
             maxLength={24}
-            placeholder="@username"
+            placeholder="username"
             autoCapitalize="none"
-            autoCorrect="off"
             spellCheck={false}
           />
-
-          {handle && (
-            <div
-              style={{
-                minHeight: 24,
-                padding:
-                  "7px 4px 0",
-                fontSize: 12,
-              }}
-            >
-              {usernameStatus ===
-                "checking" && (
-                <span className="subtle">
-                  conferindo
-                  {" "}
-                  @{handle}...
-                </span>
-              )}
-
-              {usernameStatus ===
-                "current" && (
-                <span className="subtle">
-                  seu @ atual
-                </span>
-              )}
-
-              {usernameStatus ===
-                "available" && (
-                <span
-                  style={{
-                    color:
-                      "#39734d",
-                  }}
-                >
-                  @{handle} está
-                  disponível
-                </span>
-              )}
-
-              {usernameStatus ===
-                "taken" && (
-                <span
-                  style={{
-                    color:
-                      "#b42318",
-                  }}
-                >
-                  @{handle} já
-                  está em uso
-                </span>
-              )}
-
-              {usernameStatus ===
-                "invalid" && (
-                <span
-                  style={{
-                    color:
-                      "#b42318",
-                  }}
-                >
-                  use pelo menos
-                  3 caracteres
-                </span>
-              )}
-            </div>
-          )}
         </label>
-
-        {/* BIO */}
 
         <label>
           <span className="subtle">
@@ -983,8 +568,7 @@ export default function Settings() {
           <div
             className="subtle"
             style={{
-              textAlign:
-                "right",
+              textAlign: "right",
               fontSize: 12,
               marginTop: 5,
             }}
@@ -1010,19 +594,13 @@ export default function Settings() {
           onClick={() =>
             void save()
           }
-          disabled={
-            saving ||
-            usernameBlocked
-          }
+          disabled={saving}
         >
           <Save size={17} />
 
           {saving
             ? "salvando..."
-            : usernameStatus ===
-                "checking"
-              ? "conferindo @..."
-              : "salvar alterações"}
+            : "salvar alterações"}
         </button>
 
         <button
@@ -1033,6 +611,8 @@ export default function Settings() {
         >
           cancelar
         </button>
+
+        <TopFiveEditor />
 
         <div
           style={{
@@ -1057,6 +637,7 @@ export default function Settings() {
           <LogOut size={17} />
           sair da conta
         </button>
+        </div>
       </div>
     </main>
   );

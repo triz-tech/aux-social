@@ -1,6 +1,10 @@
 "use client";
 
-import { Search } from "lucide-react";
+import {
+  Hash,
+  Search,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import {
   useEffect,
@@ -34,6 +38,14 @@ type DiscoverTrack = {
   source_url: string;
 };
 
+type DiscoverAlbum = {
+  id: string;
+  title: string;
+  artist: string;
+  artwork_url: string | null;
+  source_url: string;
+};
+
 type DiscoverAuthor = {
   id: string;
   username: string;
@@ -42,16 +54,28 @@ type DiscoverAuthor = {
   avatar_url: string | null;
 };
 
+type TrendingTag = {
+  label: string;
+  count: number;
+};
+
 type DiscoverPost = {
   id: string;
   type: "review" | "memory";
   body: string;
   rating: number | null;
+  trend: string | null;
   created_at: string;
 
   track:
     | DiscoverTrack
-    | DiscoverTrack[];
+    | DiscoverTrack[]
+    | null;
+
+  album:
+    | DiscoverAlbum
+    | DiscoverAlbum[]
+    | null;
 
   author:
     | DiscoverAuthor
@@ -72,6 +96,34 @@ function one<T>(
     : value;
 }
 
+function oneOrNull<T>(
+  value:
+    | T
+    | T[]
+    | null
+    | undefined
+): T | null {
+  if (!value) {
+    return null;
+  }
+
+  return Array.isArray(value)
+    ? value[0] ?? null
+    : value;
+}
+
+function subjectOf(
+  post: DiscoverPost
+):
+  | DiscoverTrack
+  | DiscoverAlbum
+  | null {
+  return (
+    oneOrNull(post.album) ??
+    oneOrNull(post.track)
+  );
+}
+
 function stars(
   rating: number | null
 ) {
@@ -89,6 +141,15 @@ function stars(
     "★".repeat(full) +
     (half ? "½" : "")
   );
+}
+
+function normalizeTag(
+  value: string
+) {
+  return value
+    .trim()
+    .replace(/^#/, "")
+    .trim();
 }
 
 /*
@@ -133,6 +194,28 @@ export default function Discover() {
   const [error, setError] =
     useState("");
 
+  const [
+    activeTag,
+    setActiveTag,
+  ] = useState("");
+
+  const [
+    tagPosts,
+    setTagPosts,
+  ] = useState<DiscoverPost[]>(
+    []
+  );
+
+  const [tagBusy, setTagBusy] =
+    useState(false);
+
+  const [
+    trendingTags,
+    setTrendingTags,
+  ] = useState<TrendingTag[]>(
+    []
+  );
+
   /*
    * =====================================================
    * CONTEÚDO INICIAL REAL
@@ -144,6 +227,8 @@ export default function Discover() {
       setRecentPeople(
         demoProfiles.slice(0, 4)
       );
+
+      setTrendingTags([]);
 
       setLoadingDiscover(false);
 
@@ -172,6 +257,7 @@ export default function Discover() {
               type,
               body,
               rating,
+              trend,
               created_at,
 
               track:tracks!posts_track_id_fkey(
@@ -179,6 +265,14 @@ export default function Discover() {
                 title,
                 artist,
                 album,
+                artwork_url,
+                source_url
+              ),
+
+              album:albums!posts_album_id_fkey(
+                id,
+                title,
+                artist,
                 artwork_url,
                 source_url
               ),
@@ -206,6 +300,55 @@ export default function Discover() {
 
         if (postsError) {
           throw postsError;
+        }
+
+        /*
+         * Tags mais usadas nos últimos 7 dias.
+         * Limitamos a 200 publicações recentes para manter
+         * o Discover leve sem precisar de uma RPC nova.
+         */
+
+        const since =
+          new Date(
+            Date.now() -
+              7 *
+                24 *
+                60 *
+                60 *
+                1000
+          ).toISOString();
+
+        const {
+          data: trendData,
+          error: trendError,
+        } = await supabase
+          .from("posts")
+          .select(
+            "trend,created_at"
+          )
+          .eq(
+            "visibility",
+            "public"
+          )
+          .not(
+            "trend",
+            "is",
+            null
+          )
+          .gte(
+            "created_at",
+            since
+          )
+          .order(
+            "created_at",
+            {
+              ascending: false,
+            }
+          )
+          .limit(200);
+
+        if (trendError) {
+          throw trendError;
         }
 
         /*
@@ -251,6 +394,50 @@ export default function Discover() {
           (peopleData ??
             []) as Profile[]
         );
+
+        const tagMap =
+          new Map<
+            string,
+            TrendingTag
+          >();
+
+        (
+          trendData ?? []
+        ).forEach((row) => {
+          const label =
+            normalizeTag(
+              row.trend ?? ""
+            );
+
+          if (!label) {
+            return;
+          }
+
+          const key =
+            label.toLowerCase();
+
+          const current =
+            tagMap.get(key);
+
+          tagMap.set(key, {
+            label:
+              current?.label ??
+              label,
+            count:
+              (current?.count ??
+                0) + 1,
+          });
+        });
+
+        setTrendingTags(
+          [...tagMap.values()]
+            .sort(
+              (a, b) =>
+                b.count -
+                a.count
+            )
+            .slice(0, 8)
+        );
       } catch {
         /*
          * Discover continua utilizável
@@ -277,6 +464,245 @@ export default function Discover() {
 
   /*
    * =====================================================
+   * TAG / TREND
+   * =====================================================
+   */
+
+  async function loadTag(
+    value: string
+  ) {
+    const clean =
+      normalizeTag(value);
+
+    if (!clean) {
+      return;
+    }
+
+    setActiveTag(clean);
+    setTagBusy(true);
+    setError("");
+    setSearched(false);
+    setTracks([]);
+    setPeople([]);
+
+    if (IS_DEMO) {
+      const matches =
+        recentPosts.filter(
+          (post) =>
+            normalizeTag(
+              post.trend ?? ""
+            ).toLowerCase() ===
+            clean.toLowerCase()
+        );
+
+      setTagPosts(matches);
+      setTagBusy(false);
+      return;
+    }
+
+    try {
+      const supabase =
+        createClient();
+
+      const select = `
+        id,
+        type,
+        body,
+        rating,
+        trend,
+        created_at,
+
+        track:tracks!posts_track_id_fkey(
+          id,
+          title,
+          artist,
+          album,
+          artwork_url,
+          source_url
+        ),
+
+        album:albums!posts_album_id_fkey(
+          id,
+          title,
+          artist,
+          artwork_url,
+          source_url
+        ),
+
+        author:profiles!posts_user_id_fkey(
+          id,
+          username,
+          display_name,
+          bio,
+          avatar_url
+        )
+      `;
+
+      /*
+       * Algumas publicações antigas podem ter
+       * sido salvas como "#tag" e outras como
+       * "tag". Buscamos as duas formas.
+       */
+      const [
+        plainResult,
+        hashResult,
+      ] = await Promise.all([
+        supabase
+          .from("posts")
+          .select(select)
+          .eq(
+            "visibility",
+            "public"
+          )
+          .ilike(
+            "trend",
+            clean
+          )
+          .order(
+            "created_at",
+            {
+              ascending: false,
+            }
+          )
+          .limit(50),
+
+        supabase
+          .from("posts")
+          .select(select)
+          .eq(
+            "visibility",
+            "public"
+          )
+          .ilike(
+            "trend",
+            `#${clean}`
+          )
+          .order(
+            "created_at",
+            {
+              ascending: false,
+            }
+          )
+          .limit(50),
+      ]);
+
+      if (plainResult.error) {
+        throw plainResult.error;
+      }
+
+      if (hashResult.error) {
+        throw hashResult.error;
+      }
+
+      const byId =
+        new Map<
+          string,
+          DiscoverPost
+        >();
+
+      [
+        ...(plainResult.data ??
+          []),
+        ...(hashResult.data ??
+          []),
+      ].forEach((post) => {
+        byId.set(
+          post.id,
+          post as unknown as DiscoverPost
+        );
+      });
+
+      const matches = [
+        ...byId.values(),
+      ].sort(
+        (a, b) =>
+          new Date(
+            b.created_at
+          ).getTime() -
+          new Date(
+            a.created_at
+          ).getTime()
+      );
+
+      setTagPosts(matches);
+    } catch (err) {
+      setTagPosts([]);
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "não consegui abrir essa tag."
+      );
+    } finally {
+      setTagBusy(false);
+    }
+  }
+
+  function clearTag() {
+    setActiveTag("");
+    setTagPosts([]);
+    setQ("");
+    setError("");
+
+    window.history.replaceState(
+      {},
+      "",
+      "/discover"
+    );
+  }
+
+  async function openTag(
+    tag: string
+  ) {
+    const clean =
+      normalizeTag(tag);
+
+    if (!clean) {
+      return;
+    }
+
+    setQ(`#${clean}`);
+
+    window.history.replaceState(
+      {},
+      "",
+      `/discover?tag=${encodeURIComponent(
+        clean
+      )}`
+    );
+
+    await loadTag(clean);
+  }
+
+  /*
+   * Se a pessoa veio de um #tag dentro de um post,
+   * a própria URL abre o Discover já filtrado.
+   */
+  useEffect(() => {
+    const params =
+      new URLSearchParams(
+        window.location.search
+      );
+
+    const tag =
+      normalizeTag(
+        params.get("tag") ?? ""
+      );
+
+    if (!tag) {
+      return;
+    }
+
+    setQ(`#${tag}`);
+
+    void loadTag(tag);
+
+    // Lê a URL somente quando a tela abre.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /*
+   * =====================================================
    * SEARCH
    * =====================================================
    */
@@ -290,6 +716,16 @@ export default function Discover() {
     ) {
       return;
     }
+
+    if (
+      term.startsWith("#")
+    ) {
+      await openTag(term);
+      return;
+    }
+
+    setActiveTag("");
+    setTagPosts([]);
 
     setBusy(true);
     setError("");
@@ -456,6 +892,17 @@ export default function Discover() {
   ) {
     setQ(value);
 
+    if (activeTag) {
+      setActiveTag("");
+      setTagPosts([]);
+
+      window.history.replaceState(
+        {},
+        "",
+        "/discover"
+      );
+    }
+
     if (!value.trim()) {
       setSearched(false);
       setTracks([]);
@@ -480,7 +927,9 @@ export default function Discover() {
     const post of recentPosts
   ) {
     const track =
-      one(post.track);
+      oneOrNull(
+        post.track
+      );
 
     if (
       !track ||
@@ -547,6 +996,7 @@ export default function Discover() {
         </span>
       </header>
 
+      <div className="discoverContent">
       <h1 className="pageTitle">
         o que tá por aí?
       </h1>
@@ -560,7 +1010,7 @@ export default function Discover() {
       <div className="searchbar">
         <input
           className="field"
-          placeholder="música, artista ou pessoa"
+          placeholder="música, artista, pessoa ou #tag"
           value={q}
           onChange={(
             event
@@ -607,6 +1057,280 @@ export default function Discover() {
         </div>
       )}
 
+
+      {activeTag && (
+        <section
+          style={{
+            marginTop: 24,
+            paddingBottom: 28,
+          }}
+        >
+          <button
+            type="button"
+            className="pill"
+            onClick={clearTag}
+            title="Limpar tag"
+            style={{
+              display:
+                "inline-flex",
+              alignItems:
+                "center",
+              gap: 6,
+              cursor:
+                "pointer",
+            }}
+          >
+            <Hash size={13} />
+            {activeTag}
+            <X size={12} />
+          </button>
+
+          <div
+            style={{
+              marginTop: 18,
+              marginBottom: 14,
+            }}
+          >
+            <h2
+              className="sectionTitle"
+              style={{
+                marginBottom: 5,
+              }}
+            >
+              #{activeTag}
+            </h2>
+
+            <p
+              className="subtle"
+              style={{
+                margin: 0,
+                fontSize: 12,
+              }}
+            >
+              {tagBusy
+                ? "procurando publicações..."
+                : `${tagPosts.length} ${
+                    tagPosts.length === 1
+                      ? "publicação"
+                      : "publicações"
+                  }`}
+            </p>
+          </div>
+
+          {!tagBusy &&
+            tagPosts.length >
+              0 && (
+              <div
+                className="stack"
+              >
+                {tagPosts.map(
+                  (post) => {
+                    const subject =
+                      subjectOf(
+                        post
+                      );
+
+                    const author =
+                      one(
+                        post.author
+                      );
+
+                    if (!subject) {
+                      return null;
+                    }
+
+                    return (
+                      <Link
+                        key={
+                          post.id
+                        }
+                        href={`/p/${post.id}`}
+                        style={{
+                          display:
+                            "grid",
+                          gridTemplateColumns:
+                            "72px minmax(0, 1fr)",
+                          gap: 12,
+                          padding: 11,
+                          color:
+                            "inherit",
+                          textDecoration:
+                            "none",
+                          border:
+                            "1px solid var(--line)",
+                          borderRadius:
+                            19,
+                          background:
+                            "var(--surface-solid)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 72,
+                            height: 72,
+                            overflow:
+                              "hidden",
+                            borderRadius:
+                              14,
+                            background:
+                              "var(--soft-2)",
+                          }}
+                        >
+                          {subject.artwork_url && (
+                            <img
+                              src={
+                                subject.artwork_url
+                              }
+                              alt=""
+                              style={{
+                                display:
+                                  "block",
+                                width:
+                                  "100%",
+                                height:
+                                  "100%",
+                                objectFit:
+                                  "cover",
+                              }}
+                            />
+                          )}
+                        </div>
+
+                        <div
+                          style={{
+                            minWidth: 0,
+                          }}
+                        >
+                          <div
+                            style={{
+                              display:
+                                "flex",
+                              alignItems:
+                                "center",
+                              gap: 7,
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize:
+                                  11,
+                                fontWeight:
+                                  700,
+                                color:
+                                  post.type ===
+                                  "review"
+                                    ? "#4c7e61"
+                                    : "#705b99",
+                              }}
+                            >
+                              {post.type ===
+                              "review"
+                                ? "★ review"
+                                : "◎ memory"}
+                            </span>
+
+                            {post.type ===
+                              "review" &&
+                              post.rating && (
+                                <span
+                                  style={{
+                                    marginLeft:
+                                      "auto",
+                                    fontSize:
+                                      11,
+                                  }}
+                                >
+                                  {stars(
+                                    post.rating
+                                  )}
+                                </span>
+                              )}
+                          </div>
+
+                          <strong
+                            style={{
+                              display:
+                                "block",
+                              marginTop: 5,
+                              overflow:
+                                "hidden",
+                              textOverflow:
+                                "ellipsis",
+                              whiteSpace:
+                                "nowrap",
+                              fontSize:
+                                13,
+                            }}
+                          >
+                            {
+                              subject.title
+                            }{" "}
+                            ·{" "}
+                            {
+                              subject.artist
+                            }
+                          </strong>
+
+                          <span
+                            className="subtle"
+                            style={{
+                              display:
+                                "block",
+                              marginTop: 2,
+                              fontSize:
+                                11,
+                            }}
+                          >
+                            @
+                            {
+                              author.username
+                            }
+                          </span>
+
+                          <p
+                            style={{
+                              margin:
+                                "7px 0 0",
+                              display:
+                                "-webkit-box",
+                              WebkitLineClamp:
+                                2,
+                              WebkitBoxOrient:
+                                "vertical",
+                              overflow:
+                                "hidden",
+                              fontSize:
+                                12,
+                              lineHeight:
+                                1.35,
+                            }}
+                          >
+                            {
+                              post.body
+                            }
+                          </p>
+                        </div>
+                      </Link>
+                    );
+                  }
+                )}
+              </div>
+            )}
+
+          {!tagBusy &&
+            !error &&
+            !tagPosts.length && (
+              <div className="empty">
+                <p>
+                  ainda não tem
+                  outra publicação
+                  com essa tag.
+                </p>
+              </div>
+            )}
+        </section>
+      )}
+
       {/*
        * ==================================================
        * RESULTADOS DA BUSCA
@@ -632,11 +1356,24 @@ export default function Discover() {
                       }
                       href={`/u/${profile.username}`}
                     >
-                      <Avatar
-                        profile={
-                          profile
-                        }
-                      />
+                      <span
+                        style={{
+                          display:
+                            "flex",
+                          flex:
+                            "0 0 auto",
+                          alignItems:
+                            "center",
+                          justifyContent:
+                            "center",
+                        }}
+                      >
+                        <Avatar
+                          profile={
+                            profile
+                          }
+                        />
+                      </span>
 
                       <div>
                         <strong>
@@ -716,7 +1453,7 @@ export default function Discover() {
        * ==================================================
        */}
 
-      {!searched && (
+      {!searched && !activeTag && (
         <>
           {loadingDiscover ? (
             <p className="subtle">
@@ -724,6 +1461,146 @@ export default function Discover() {
             </p>
           ) : (
             <>
+              {/*
+               * ------------------------------------------
+               * TAGS EM ALTA
+               * ------------------------------------------
+               */}
+
+              {trendingTags.length >
+                0 && (
+                <section
+                  style={{
+                    marginTop: 34,
+                  }}
+                >
+                  <div
+                    style={{
+                      display:
+                        "flex",
+                      alignItems:
+                        "end",
+                      justifyContent:
+                        "space-between",
+                      gap: 12,
+                      marginBottom:
+                        13,
+                    }}
+                  >
+                    <div>
+                      <h2
+                        style={{
+                          margin: 0,
+                          fontSize:
+                            16,
+                          letterSpacing:
+                            "-0.02em",
+                        }}
+                      >
+                        rolando por aqui
+                      </h2>
+
+                      <p
+                        className="subtle"
+                        style={{
+                          margin:
+                            "4px 0 0",
+                          fontSize:
+                            11,
+                        }}
+                      >
+                        tags mais usadas
+                        nos últimos 7 dias
+                      </p>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display:
+                        "flex",
+                      gap: 8,
+                      overflowX:
+                        "auto",
+                      paddingBottom:
+                        4,
+                      scrollbarWidth:
+                        "none",
+                    }}
+                  >
+                    {trendingTags.map(
+                      (item) => (
+                        <button
+                          type="button"
+                          key={
+                            item.label
+                          }
+                          onClick={() =>
+                            void openTag(
+                              item.label
+                            )
+                          }
+                          style={{
+                            flex:
+                              "0 0 auto",
+                            display:
+                              "inline-flex",
+                            alignItems:
+                              "center",
+                            gap: 7,
+                            minHeight:
+                              38,
+                            padding:
+                              "0 13px",
+                            border:
+                              "1px solid var(--line)",
+                            borderRadius:
+                              999,
+                            cursor:
+                              "pointer",
+                            color:
+                              "var(--text)",
+                            background:
+                              "var(--surface-solid)",
+                            font:
+                              "inherit",
+                            fontSize:
+                              12,
+                            fontWeight:
+                              650,
+                          }}
+                        >
+                          <Hash
+                            size={13}
+                          />
+
+                          <span>
+                            {
+                              item.label
+                            }
+                          </span>
+
+                          <small
+                            style={{
+                              opacity:
+                                0.48,
+                              fontSize:
+                                10,
+                              fontWeight:
+                                700,
+                            }}
+                          >
+                            {
+                              item.count
+                            }
+                          </small>
+                        </button>
+                      )
+                    )}
+                  </div>
+                </section>
+              )}
+
               {/*
                * ------------------------------------------
                * TOCANDO POR AQUI
@@ -769,9 +1646,13 @@ export default function Discover() {
                         post
                       ) => {
                         const track =
-                          one(
+                          oneOrNull(
                             post.track
                           );
+
+                        if (!track) {
+                          return null;
+                        }
 
                         return (
                           <Link
@@ -794,7 +1675,7 @@ export default function Discover() {
                                 "hidden",
 
                               background:
-                                "#ececea",
+                                "var(--soft-2)",
                             }}
                           >
                             <img
@@ -858,15 +1739,19 @@ export default function Discover() {
                       (
                         review
                       ) => {
-                        const track =
-                          one(
-                            review.track
+                        const subject =
+                          subjectOf(
+                            review
                           );
 
                         const author =
                           one(
                             review.author
                           );
+
+                        if (!subject) {
+                          return null;
+                        }
 
                         return (
                           <Link
@@ -888,13 +1773,16 @@ export default function Discover() {
                                 "16px",
 
                               border:
-                                "1px solid rgba(0,0,0,.08)",
+                                "1px solid var(--line)",
 
                               borderRadius:
                                 20,
 
                               background:
-                                "rgba(255,255,255,.76)",
+                                "var(--surface-solid)",
+
+                              boxShadow:
+                                "0 10px 32px rgba(0,0,0,.045)",
                             }}
                           >
                             <div
@@ -971,11 +1859,11 @@ export default function Discover() {
                                   }}
                                 >
                                   {
-                                    track.title
+                                    subject.title
                                   }{" "}
                                   ·{" "}
                                   {
-                                    track.artist
+                                    subject.artist
                                   }
                                 </div>
                               </div>
@@ -1060,11 +1948,24 @@ export default function Discover() {
                             }
                             href={`/u/${profile.username}`}
                           >
-                            <Avatar
-                              profile={
-                                profile
-                              }
-                            />
+                            <span
+                              style={{
+                                display:
+                                  "flex",
+                                flex:
+                                  "0 0 auto",
+                                alignItems:
+                                  "center",
+                                justifyContent:
+                                  "center",
+                              }}
+                            >
+                              <Avatar
+                                profile={
+                                  profile
+                                }
+                              />
+                            </span>
 
                             <div>
                               <strong>
@@ -1108,6 +2009,8 @@ export default function Discover() {
           )}
         </>
       )}
+
+      </div>
     </main>
   );
 }

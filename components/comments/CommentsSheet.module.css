@@ -1,0 +1,779 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  background: rgba(20, 20, 18, 0.38);
+
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.sheet {
+  width: min(100%, 620px);
+  max-height: min(78dvh, 700px);
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  padding:
+    8px
+    16px
+    max(
+      14px,
+      env(safe-area-inset-bottom)
+    );
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.76);
+
+  border-bottom: 0;
+
+  border-radius:
+    30px 30px 0 0;
+
+  background:
+    rgba(250, 249, 246, 0.985);
+
+  box-shadow:
+    0 -28px 90px
+    rgba(0, 0, 0, 0.18);
+}
+
+.handle {
+  flex: none;
+
+  width: 38px;
+  height: 4px;
+
+  margin:
+    2px auto 10px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(20, 20, 20, 0.22);
+}
+
+.header {
+  flex: none;
+
+  display: flex;
+  align-items: center;
+  justify-content:
+    space-between;
+
+  gap: 12px;
+
+  padding:
+    2px 2px 13px;
+
+  border-bottom:
+    1px solid
+    rgba(0, 0, 0, 0.07);
+}
+
+.header > div > span {
+  display: block;
+
+  margin-bottom: 3px;
+
+  color: #777771;
+
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.header h2 {
+  margin: 0;
+
+  color: #171715;
+
+  font-size: 25px;
+  font-weight: 720;
+  letter-spacing: -0.035em;
+}
+
+.closeButton {
+  width: 36px;
+  height: 36px;
+
+  display: grid;
+  place-items: center;
+
+  border: 0;
+  border-radius: 50%;
+
+  color: #33332f;
+  background:
+    rgba(0, 0, 0, 0.045);
+
+  cursor: pointer;
+}
+
+.list {
+  flex: 1 1 auto;
+
+  min-height: 160px;
+
+  overflow-y: auto;
+  overscroll-behavior:
+    contain;
+
+  padding: 9px 1px 16px;
+
+  scrollbar-width: none;
+}
+
+.list::-webkit-scrollbar {
+  display: none;
+}
+
+.commentBranch {
+  position: relative;
+
+  padding:
+    7px 0 3px;
+}
+
+.replyBranch {
+  position: relative;
+
+  padding:
+    4px 0 2px;
+}
+
+.comment {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 10px;
+}
+
+.avatarLink {
+  flex: none;
+
+  color: inherit;
+  text-decoration: none;
+}
+
+.avatar,
+.avatarFallback {
+  width: 34px;
+  height: 34px;
+
+  display: grid;
+  place-items: center;
+
+  overflow: hidden;
+
+  border-radius: 50%;
+
+  object-fit: cover;
+}
+
+.avatar {
+  background: #e7e7e3;
+}
+
+.avatarFallback {
+  color: #4d4d48;
+  background: #e7e7e2;
+
+  font-size: 10px;
+  font-weight: 780;
+  letter-spacing: -0.01em;
+}
+
+.commentContent {
+  min-width: 0;
+  flex: 1;
+
+  padding-top: 1px;
+}
+
+.commentMeta {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  min-width: 0;
+}
+
+.commentMeta a {
+  min-width: 0;
+
+  overflow: hidden;
+
+  color: #232320;
+
+  font-size: 12px;
+  font-weight: 740;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commentMeta span {
+  flex: none;
+
+  color: #979790;
+
+  font-size: 10px;
+}
+
+.commentContent p {
+  margin: 4px 0 0;
+
+  color: #30302d;
+
+  font-size: 13px;
+  line-height: 1.45;
+
+  overflow-wrap: anywhere;
+}
+
+.replyButton {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 4px;
+
+  margin-top: 5px;
+  padding: 3px 0;
+
+  border: 0;
+
+  color: #777771;
+  background: transparent;
+
+  font: inherit;
+  font-size: 10px;
+  font-weight: 650;
+
+  cursor: pointer;
+}
+
+.replyButton:hover {
+  color: #252522;
+}
+
+.replies {
+  position: relative;
+
+  margin:
+    5px 0 0 43px;
+
+  padding-left: 13px;
+}
+
+.replies::before {
+  content: "";
+
+  position: absolute;
+
+  top: 2px;
+  bottom: 5px;
+  left: 0;
+
+  width: 1px;
+
+  background:
+    rgba(0, 0, 0, 0.09);
+}
+
+.replies .replies {
+  margin-left: 30px;
+}
+
+.composerArea {
+  flex: none;
+
+  padding-top: 9px;
+
+  border-top:
+    1px solid
+    rgba(0, 0, 0, 0.07);
+}
+
+.replying {
+  display: flex;
+  align-items: center;
+  justify-content:
+    space-between;
+
+  gap: 12px;
+
+  margin-bottom: 7px;
+  padding:
+    7px 10px;
+
+  border-radius: 12px;
+
+  color: #666660;
+  background:
+    rgba(0, 0, 0, 0.035);
+
+  font-size: 10px;
+}
+
+.replying strong {
+  color: #30302c;
+}
+
+.replying button {
+  flex: none;
+
+  width: 25px;
+  height: 25px;
+
+  display: grid;
+  place-items: center;
+
+  border: 0;
+  border-radius: 50%;
+
+  color: #6d6d67;
+  background:
+    rgba(0, 0, 0, 0.045);
+
+  cursor: pointer;
+}
+
+.form {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  padding:
+    5px 5px 5px 13px;
+
+  border:
+    1px solid
+    rgba(0, 0, 0, 0.09);
+
+  border-radius: 999px;
+
+  background: white;
+
+  box-shadow:
+    0 5px 22px
+    rgba(0, 0, 0, 0.04);
+}
+
+.form input {
+  min-width: 0;
+  flex: 1;
+
+  padding: 9px 0;
+
+  border: 0;
+  outline: 0;
+
+  color: #22221f;
+  background: transparent;
+
+  font: inherit;
+  font-size: 13px;
+}
+
+.form input::placeholder {
+  color: #a0a099;
+}
+
+.form button {
+  flex: none;
+
+  width: 38px;
+  height: 38px;
+
+  display: grid;
+  place-items: center;
+
+  border: 0;
+  border-radius: 50%;
+
+  color: white;
+  background: #171715;
+
+  cursor: pointer;
+
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease;
+}
+
+.form button:active {
+  transform: scale(0.95);
+}
+
+.form button:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.state,
+.error,
+.empty {
+  min-height: 170px;
+
+  display: grid;
+  place-content: center;
+
+  padding: 24px;
+
+  text-align: center;
+}
+
+.state {
+  color: #878780;
+  font-size: 12px;
+}
+
+.error {
+  color: #a83a32;
+  font-size: 12px;
+}
+
+.empty {
+  gap: 4px;
+}
+
+.empty strong {
+  color: #31312e;
+
+  font-size: 15px;
+  font-weight: 690;
+}
+
+.empty span {
+  color: #92928b;
+
+  font-size: 11px;
+}
+
+@media (min-width: 760px) {
+  .backdrop {
+    align-items: center;
+
+    padding: 28px;
+  }
+
+  .sheet {
+    max-height:
+      min(720px, 82vh);
+
+    border-bottom:
+      1px solid
+      rgba(255, 255, 255, 0.76);
+
+    border-radius: 30px;
+
+    padding-bottom: 16px;
+  }
+
+  .handle {
+    display: none;
+  }
+
+  .header {
+    padding-top: 10px;
+  }
+}
+
+@media (
+  prefers-reduced-motion:
+    reduce
+) {
+  .form button {
+    transition: none;
+  }
+}
+
+
+.commentActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 10px;
+
+  margin-top: 4px;
+}
+
+.commentActions .replyButton {
+  margin-top: 0;
+}
+
+.deleteButton {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 4px;
+
+  padding: 3px 0;
+
+  border: 0;
+
+  color: #9b5b54;
+  background: transparent;
+
+  font: inherit;
+  font-size: 10px;
+  font-weight: 650;
+
+  cursor: pointer;
+}
+
+.deleteButton:hover {
+  color: #a12f25;
+}
+
+.deleteConfirm {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 7px;
+
+  font-size: 10px;
+}
+
+.deleteConfirm button {
+  padding: 3px 0;
+
+  border: 0;
+
+  color: #777771;
+  background: transparent;
+
+  font: inherit;
+  font-size: 10px;
+  font-weight: 650;
+
+  cursor: pointer;
+}
+
+.deleteConfirm button:first-child {
+  color: #a12f25;
+}
+
+.deleteConfirm button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/*
+ * O CommentsSheet agora é montado em document.body via portal.
+ * No desktop isso impede que transform/backdrop-filter de cards,
+ * feed ou transições mude a referência do position: fixed.
+ */
+@media (min-width: 760px) {
+  .backdrop {
+    position: fixed;
+    inset: 0;
+
+    width: 100vw;
+    height: 100dvh;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 28px;
+  }
+
+  .sheet {
+    position: relative;
+
+    width: min(620px, calc(100vw - 56px));
+    max-height: min(720px, calc(100dvh - 56px));
+
+    margin: 0;
+  }
+}
+
+
+/* =========================================================
+   AUX — COMMENTS SHEET / DARK MODE
+   ========================================================= */
+
+:global(html[data-theme="dark"]) .backdrop {
+  background:
+    rgba(0, 0, 0, 0.52);
+}
+
+:global(html[data-theme="dark"]) .sheet {
+  color: var(--text);
+
+  border-color:
+    rgba(255, 255, 255, 0.085);
+
+  background:
+    rgba(25, 25, 22, 0.985);
+
+  box-shadow:
+    0 -30px 100px
+    rgba(0, 0, 0, 0.46);
+}
+
+:global(html[data-theme="dark"]) .handle {
+  background:
+    rgba(255, 255, 255, 0.20);
+}
+
+:global(html[data-theme="dark"]) .header {
+  border-bottom-color:
+    rgba(255, 255, 255, 0.075);
+}
+
+:global(html[data-theme="dark"]) .header > div > span {
+  color: var(--muted);
+}
+
+:global(html[data-theme="dark"]) .header h2 {
+  color: var(--text);
+}
+
+:global(html[data-theme="dark"]) .closeButton {
+  color: var(--muted);
+
+  background:
+    rgba(255, 255, 255, 0.055);
+}
+
+:global(html[data-theme="dark"]) .closeButton:hover {
+  color: var(--text);
+
+  background:
+    rgba(255, 255, 255, 0.09);
+}
+
+:global(html[data-theme="dark"]) .avatar,
+:global(html[data-theme="dark"]) .avatarFallback {
+  background: var(--soft-2);
+}
+
+:global(html[data-theme="dark"]) .avatarFallback {
+  color: var(--muted);
+}
+
+:global(html[data-theme="dark"]) .commentMeta a {
+  color: var(--text);
+}
+
+:global(html[data-theme="dark"]) .commentMeta span {
+  color: #888780;
+}
+
+:global(html[data-theme="dark"]) .commentContent p {
+  color: #deddd6;
+}
+
+:global(html[data-theme="dark"]) .replyButton {
+  color: #96958e;
+}
+
+:global(html[data-theme="dark"]) .replyButton:hover {
+  color: var(--text);
+}
+
+:global(html[data-theme="dark"]) .replies::before {
+  background:
+    rgba(255, 255, 255, 0.09);
+}
+
+:global(html[data-theme="dark"]) .composerArea {
+  border-top-color:
+    rgba(255, 255, 255, 0.075);
+}
+
+:global(html[data-theme="dark"]) .replying {
+  color: var(--muted);
+
+  background:
+    rgba(255, 255, 255, 0.05);
+}
+
+:global(html[data-theme="dark"]) .replying strong {
+  color: var(--text);
+}
+
+:global(html[data-theme="dark"]) .replying button {
+  color: var(--muted);
+
+  background:
+    rgba(255, 255, 255, 0.06);
+}
+
+:global(html[data-theme="dark"]) .form {
+  border-color:
+    rgba(255, 255, 255, 0.095);
+
+  background:
+    var(--input-bg);
+
+  box-shadow:
+    0 6px 24px
+    rgba(0, 0, 0, 0.16);
+}
+
+:global(html[data-theme="dark"]) .form input {
+  color: var(--text);
+}
+
+:global(html[data-theme="dark"]) .form input::placeholder {
+  color: #77766f;
+}
+
+:global(html[data-theme="dark"]) .form button {
+  color: var(--button-dark-text);
+
+  background:
+    var(--button-dark);
+}
+
+:global(html[data-theme="dark"]) .state {
+  color: var(--muted);
+}
+
+:global(html[data-theme="dark"]) .error {
+  color: #e18a82;
+}
+
+:global(html[data-theme="dark"]) .empty strong {
+  color: var(--text);
+}
+
+:global(html[data-theme="dark"]) .empty span {
+  color: var(--muted);
+}
+
+:global(html[data-theme="dark"]) .deleteButton,
+:global(html[data-theme="dark"]) .deleteConfirm button:first-child {
+  color: #d98279;
+}
+
+:global(html[data-theme="dark"]) .deleteButton:hover {
+  color: #efa198;
+}
+
+:global(html[data-theme="dark"]) .deleteConfirm button {
+  color: var(--muted);
+}
+
+@media (min-width: 760px) {
+  :global(html[data-theme="dark"]) .sheet {
+    border-bottom-color:
+      rgba(255, 255, 255, 0.085);
+  }
+}

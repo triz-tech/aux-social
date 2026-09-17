@@ -1,0 +1,1165 @@
+.post {
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+/* =========================================================
+   REVIEW — VERDE
+   ========================================================= */
+
+.review {
+  border-color:
+    rgba(78, 139, 105, 0.30);
+
+  box-shadow:
+    0 0 0 1px
+      rgba(78, 139, 105, 0.09),
+    0 14px 38px
+      rgba(62, 125, 91, 0.09);
+}
+
+.review .postKind {
+  background:
+    rgba(78, 139, 105, 0.10);
+
+  color: #4c7e61;
+}
+
+/* =========================================================
+   REVIEW RUIM — LARANJA
+   0.5 até 2.5 estrelas
+   ========================================================= */
+
+.review.badReview {
+  border-color:
+    rgba(211, 137, 71, 0.38);
+
+  box-shadow:
+    0 0 0 1px
+      rgba(211, 137, 71, 0.11),
+    0 14px 38px
+      rgba(198, 119, 50, 0.10);
+}
+
+.review.badReview .postKind {
+  background:
+    rgba(211, 137, 71, 0.11);
+
+  color: #a9662f;
+}
+
+/* =========================================================
+   MEMORY — ROXO
+   ========================================================= */
+
+.memory {
+  border-color:
+    rgba(130, 102, 184, 0.30);
+
+  box-shadow:
+    0 0 0 1px
+      rgba(130, 102, 184, 0.09),
+    0 14px 38px
+      rgba(112, 84, 166, 0.09);
+}
+
+.memory .postKind {
+  background:
+    rgba(130, 102, 184, 0.10);
+
+  color: #705b99;
+}
+
+/* =========================================================
+   SELO REVIEW / MEMORY
+   ========================================================= */
+
+.postKind {
+  flex: 0 0 auto;
+
+  display: inline-flex;
+  align-items: center;
+
+  gap: 5px;
+
+  min-height: 28px;
+
+  padding:
+    0
+    9px;
+
+  border-radius: 999px;
+
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1;
+
+  letter-spacing:
+    -0.01em;
+
+  white-space: nowrap;
+}
+
+.kindSymbol {
+  display: inline-grid;
+  place-items: center;
+
+  width: 13px;
+
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* =========================================================
+   TAG
+   ========================================================= */
+
+.trend {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+
+  text-decoration: none;
+  cursor: pointer;
+  max-width: 100%;
+
+  margin:
+    7px
+    0
+    9px;
+
+  color: #777772;
+
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+
+.trend:hover {
+  color: #373733;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* =========================================================
+   MOBILE — PREMIUM / MAIS LARGO
+   O desktop permanece igual.
+   ========================================================= */
+
+@media (max-width: 760px) {
+  /*
+   * O card volta a ocupar praticamente toda a coluna.
+   * A sensação de "menor" vem do conteúdo respirando dentro,
+   * não de espremer o card inteiro.
+   */
+  .post {
+    width: calc(100% + 8px);
+    margin-left: -4px;
+    margin-right: -4px;
+
+    border-radius: 28px;
+
+    background:
+      rgba(255, 255, 255, 0.96);
+
+    backdrop-filter:
+      blur(20px)
+      saturate(115%);
+
+    -webkit-backdrop-filter:
+      blur(20px)
+      saturate(115%);
+  }
+
+  /*
+   * Review: halo verde.
+   * Mais blur e menos "linha colorida".
+   */
+  .review {
+    border-color:
+      rgba(84, 145, 110, 0.16);
+
+    box-shadow:
+      0 2px 8px
+        rgba(0, 0, 0, 0.035),
+      0 18px 46px
+        rgba(73, 139, 101, 0.14),
+      0 0 34px
+        rgba(73, 139, 101, 0.055);
+  }
+
+  /*
+   * Review negativa: o mesmo efeito, em laranja.
+   */
+  .review.badReview {
+    border-color:
+      rgba(218, 143, 76, 0.18);
+
+    box-shadow:
+      0 2px 8px
+        rgba(0, 0, 0, 0.035),
+      0 18px 46px
+        rgba(211, 132, 61, 0.15),
+      0 0 34px
+        rgba(211, 132, 61, 0.06);
+  }
+
+  /*
+   * Memory: halo roxo.
+   */
+  .memory {
+    border-color:
+      rgba(138, 105, 194, 0.17);
+
+    box-shadow:
+      0 2px 8px
+        rgba(0, 0, 0, 0.035),
+      0 18px 46px
+        rgba(126, 91, 185, 0.15),
+      0 0 34px
+        rgba(126, 91, 185, 0.06);
+  }
+
+  /*
+   * No celular a mídia deixa de bater diretamente
+   * nas duas laterais do card.
+   *
+   * Isso dá o efeito "produto Apple": card grande,
+   * conteúdo visual levemente encaixado.
+   */
+  .post :global(.artwork),
+  .post :global(.memoryViewport) {
+    width: calc(100% - 20px);
+    margin-left: 10px;
+    margin-right: 10px;
+
+    border-radius: 22px;
+    overflow: hidden;
+  }
+
+  /*
+   * A capa de Review fica um pouco mais contida,
+   * porque é sempre quadrada e era ela que fazia
+   * o post parecer enorme no iPhone.
+   */
+  .review :global(.artwork) {
+    width: calc(100% - 36px);
+    margin-left: 18px;
+    margin-right: 18px;
+
+    border-radius: 23px;
+  }
+
+  /*
+   * Mantém o overlay encaixado no novo frame.
+   */
+  .review :global(.artworkOverlay) {
+    padding:
+      58px
+      16px
+      16px;
+  }
+
+  .review :global(.artworkOverlay strong) {
+    font-size: 23px;
+  }
+
+  /*
+   * Header e corpo ganham um pouco mais de respiro.
+   */
+  .post :global(.postHead) {
+    padding:
+      15px
+      16px
+      12px;
+  }
+
+  .post :global(.postBody) {
+    padding:
+      15px
+      17px
+      16px;
+  }
+
+  /*
+   * Selo menor e mais delicado no iPhone.
+   */
+  .postKind {
+    min-height: 27px;
+
+    padding:
+      0
+      9px;
+
+    font-size: 10px;
+
+    box-shadow:
+      0 5px 16px
+        rgba(0, 0, 0, 0.035);
+  }
+
+  .kindSymbol {
+    font-size: 11px;
+  }
+}
+
+/*
+ * Em iPhones muito estreitos não deixamos
+ * o card ultrapassar visualmente a coluna.
+ */
+@media (max-width: 360px) {
+  .post {
+    width: 100%;
+    margin-inline: 0;
+  }
+
+  .review :global(.artwork) {
+    width: calc(100% - 28px);
+    margin-inline: 14px;
+  }
+}
+
+/* =========================================================
+   DESKTOP HOVER
+   ========================================================= */
+
+@media (hover: hover) {
+  .post:hover {
+    transform:
+      translateY(-1px);
+  }
+
+  .review:hover {
+    box-shadow:
+      0 0 0 1px
+        rgba(78, 139, 105, 0.13),
+      0 18px 46px
+        rgba(62, 125, 91, 0.13);
+  }
+
+  .review.badReview:hover {
+    box-shadow:
+      0 0 0 1px
+        rgba(211, 137, 71, 0.16),
+      0 18px 46px
+        rgba(198, 119, 50, 0.14);
+  }
+
+  .memory:hover {
+    box-shadow:
+      0 0 0 1px
+        rgba(130, 102, 184, 0.13),
+      0 18px 46px
+        rgba(112, 84, 166, 0.13);
+  }
+}
+
+/* =========================================================
+   ACESSIBILIDADE
+   ========================================================= */
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+  .post {
+    transition: none;
+  }
+}
+
+
+/* =========================================================
+   MENU DO PRÓPRIO POST
+   ========================================================= */
+
+.headActions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.menuWrap {
+  position: relative;
+  z-index: 7;
+}
+
+.menuButton,
+.closeButton {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  color: #64645f;
+  background: transparent;
+}
+
+.menuButton {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 999px;
+
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.menuButton:hover {
+  color: #111;
+  background: rgba(17, 17, 17, 0.055);
+}
+
+.menuButton:active {
+  transform: scale(0.94);
+}
+
+.menuBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+
+  appearance: none;
+  border: 0;
+  padding: 0;
+
+  background: transparent;
+}
+
+.postMenu {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 9;
+
+  min-width: 128px;
+
+  padding: 6px;
+
+  border:
+    1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 15px;
+
+  background:
+    rgba(255, 255, 255, 0.96);
+
+  box-shadow:
+    0 15px 42px
+      rgba(0, 0, 0, 0.10);
+
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.postMenu button {
+  width: 100%;
+  min-height: 38px;
+
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  padding: 0 10px;
+
+  border: 0;
+  border-radius: 10px;
+
+  cursor: pointer;
+
+  color: #222;
+  background: transparent;
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.postMenu button:hover {
+  background:
+    rgba(17, 17, 17, 0.05);
+}
+
+/* =========================================================
+   EDITAR POST — MODAL / SHEET
+   ========================================================= */
+
+.editOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+
+  display: grid;
+  place-items: center;
+
+  padding: 24px;
+
+  background:
+    rgba(22, 20, 18, 0.22);
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.editSheet {
+  width: min(100%, 520px);
+  max-height: min(
+    760px,
+    calc(100dvh - 48px)
+  );
+
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  padding: 22px;
+
+  border:
+    1px solid rgba(0, 0, 0, 0.065);
+  border-radius: 28px;
+
+  background: #fbfbf9;
+
+  box-shadow:
+    0 30px 90px
+      rgba(0, 0, 0, 0.17);
+}
+
+.editHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.editHead h2 {
+  margin: 4px 0 0;
+
+  color: #111;
+
+  font-size: 22px;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+}
+
+.editEyebrow {
+  color: #7a7a75;
+
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  text-transform: lowercase;
+}
+
+.closeButton {
+  flex: 0 0 auto;
+
+  width: 38px;
+  height: 38px;
+  padding: 0;
+
+  display: grid;
+  place-items: center;
+
+  border:
+    1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 999px;
+
+  background: white;
+}
+
+.editTrack {
+  margin-top: 20px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 10px;
+
+  border:
+    1px solid rgba(0, 0, 0, 0.055);
+  border-radius: 18px;
+
+  background:
+    rgba(255, 255, 255, 0.76);
+}
+
+.editTrack img,
+.editTrackFallback {
+  width: 54px;
+  height: 54px;
+  flex: 0 0 auto;
+
+  border-radius: 12px;
+
+  object-fit: cover;
+  background: #ececea;
+}
+
+.editTrackFallback {
+  display: grid;
+  place-items: center;
+
+  color: #777772;
+
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.editTrack strong,
+.editTrack span {
+  display: block;
+}
+
+.editTrack strong {
+  color: #151515;
+
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.editTrack span {
+  margin-top: 3px;
+
+  color: #777772;
+
+  font-size: 12px;
+}
+
+.editField {
+  margin-top: 20px;
+}
+
+.editField label {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: #575752;
+
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.editTextarea,
+.editInput {
+  width: 100%;
+
+  border:
+    1px solid rgba(0, 0, 0, 0.085);
+
+  outline: none;
+
+  color: #171717;
+  background: white;
+
+  font: inherit;
+
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.editTextarea {
+  min-height: 142px;
+  resize: vertical;
+
+  padding: 14px 15px;
+
+  border-radius: 17px;
+
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.editInput {
+  height: 46px;
+
+  padding: 0 14px;
+
+  border-radius: 14px;
+
+  font-size: 13px;
+}
+
+.editTextarea:focus,
+.editInput:focus {
+  border-color:
+    rgba(17, 17, 17, 0.20);
+
+  box-shadow:
+    0 0 0 4px
+      rgba(17, 17, 17, 0.035);
+}
+
+.charCount {
+  display: block;
+
+  margin-top: 6px;
+
+  color: #a0a09b;
+
+  font-size: 10px;
+  text-align: right;
+}
+
+.editHint {
+  margin: 15px 0 0;
+
+  color: #8b8b86;
+
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.editError {
+  margin: 12px 0 0;
+
+  color: #9e4f3e;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.editFooter {
+  margin-top: 22px;
+
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+}
+
+.cancelButton,
+.saveButton {
+  min-height: 44px;
+
+  padding: 0 17px;
+
+  border-radius: 999px;
+
+  cursor: pointer;
+
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+
+  transition:
+    transform 150ms ease,
+    opacity 150ms ease;
+}
+
+.cancelButton {
+  border:
+    1px solid rgba(0, 0, 0, 0.08);
+
+  color: #555550;
+  background: white;
+}
+
+.saveButton {
+  border: 1px solid #111;
+
+  color: white;
+  background: #111;
+}
+
+.cancelButton:active,
+.saveButton:active {
+  transform: scale(0.98);
+}
+
+.cancelButton:disabled,
+.saveButton:disabled,
+.closeButton:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+@media (max-width: 760px) {
+  .headActions {
+    gap: 3px;
+  }
+
+  .menuButton {
+    width: 28px;
+    height: 28px;
+  }
+
+  .editOverlay {
+    place-items: end center;
+
+    padding: 0;
+
+    background:
+      rgba(22, 20, 18, 0.18);
+  }
+
+  .editSheet {
+    width: 100%;
+    max-height:
+      min(86dvh, 760px);
+
+    padding:
+      18px
+      18px
+      calc(
+        20px +
+          env(
+            safe-area-inset-bottom
+          )
+      );
+
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+
+    border-radius:
+      28px
+      28px
+      0
+      0;
+  }
+
+  .editHead h2 {
+    font-size: 21px;
+  }
+
+  .editFooter {
+    position: sticky;
+    bottom: 0;
+
+    margin:
+      22px
+      -4px
+      -4px;
+
+    padding-top: 10px;
+
+    background:
+      linear-gradient(
+        to top,
+        #fbfbf9 72%,
+        rgba(251, 251, 249, 0)
+      );
+  }
+
+  .saveButton {
+    flex: 1;
+  }
+}
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+  .menuButton,
+  .cancelButton,
+  .saveButton {
+    transition: none;
+  }
+}
+
+
+/* =========================================================
+   AUX — PHASE 4 / POSTCARD DARK MODE
+   ========================================================= */
+
+:global(html[data-theme="dark"]) .post {
+  color: var(--text);
+
+  background:
+    var(--surface-solid);
+}
+
+/*
+ * Review mantém identidade verde, mas sem virar um neon
+ * em cima do fundo preto.
+ */
+:global(html[data-theme="dark"]) .review {
+  border-color:
+    rgba(99, 177, 132, 0.25);
+
+  box-shadow:
+    0 0 0 1px
+      rgba(99, 177, 132, 0.055),
+    0 18px 42px
+      rgba(0, 0, 0, 0.22);
+}
+
+:global(html[data-theme="dark"]) .review .postKind {
+  color: #8fc7a5;
+
+  background:
+    rgba(91, 165, 122, 0.13);
+}
+
+:global(html[data-theme="dark"]) .review.badReview {
+  border-color:
+    rgba(224, 151, 84, 0.27);
+
+  box-shadow:
+    0 0 0 1px
+      rgba(224, 151, 84, 0.06),
+    0 18px 42px
+      rgba(0, 0, 0, 0.22);
+}
+
+:global(html[data-theme="dark"]) .review.badReview .postKind {
+  color: #dda46f;
+
+  background:
+    rgba(211, 137, 71, 0.14);
+}
+
+:global(html[data-theme="dark"]) .memory {
+  border-color:
+    rgba(158, 126, 216, 0.26);
+
+  box-shadow:
+    0 0 0 1px
+      rgba(158, 126, 216, 0.055),
+    0 18px 42px
+      rgba(0, 0, 0, 0.22);
+}
+
+:global(html[data-theme="dark"]) .memory .postKind {
+  color: #b49ade;
+
+  background:
+    rgba(139, 108, 195, 0.14);
+}
+
+:global(html[data-theme="dark"]) .trend {
+  color: var(--muted);
+}
+
+:global(html[data-theme="dark"]) .trend:hover {
+  color: var(--text);
+}
+
+/* menu ... */
+
+:global(html[data-theme="dark"]) .menuButton,
+:global(html[data-theme="dark"]) .closeButton {
+  color: #aaa9a2;
+}
+
+:global(html[data-theme="dark"]) .menuButton:hover {
+  color: var(--text);
+
+  background:
+    rgba(255, 255, 255, 0.065);
+}
+
+:global(html[data-theme="dark"]) .postMenu {
+  border-color:
+    rgba(255, 255, 255, 0.085);
+
+  background:
+    rgba(29, 29, 26, 0.97);
+
+  box-shadow:
+    0 18px 52px
+      rgba(0, 0, 0, 0.32);
+}
+
+:global(html[data-theme="dark"]) .postMenu button {
+  color: var(--text);
+}
+
+:global(html[data-theme="dark"]) .postMenu button:hover {
+  background:
+    rgba(255, 255, 255, 0.06);
+}
+
+/* editor */
+
+:global(html[data-theme="dark"]) .editOverlay {
+  background:
+    rgba(0, 0, 0, 0.52);
+}
+
+:global(html[data-theme="dark"]) .editSheet {
+  color: var(--text);
+
+  border-color:
+    rgba(255, 255, 255, 0.09);
+
+  background: #191916;
+
+  box-shadow:
+    0 32px 100px
+      rgba(0, 0, 0, 0.48);
+}
+
+:global(html[data-theme="dark"]) .editHead h2 {
+  color: var(--text);
+}
+
+:global(html[data-theme="dark"]) .editEyebrow,
+:global(html[data-theme="dark"]) .editHint,
+:global(html[data-theme="dark"]) .charCount {
+  color: var(--muted);
+}
+
+:global(html[data-theme="dark"]) .closeButton {
+  border-color:
+    rgba(255, 255, 255, 0.085);
+
+  background: var(--soft);
+}
+
+:global(html[data-theme="dark"]) .editTrack {
+  border-color:
+    rgba(255, 255, 255, 0.07);
+
+  background:
+    rgba(255, 255, 255, 0.045);
+}
+
+:global(html[data-theme="dark"]) .editTrackFallback {
+  color: var(--muted);
+  background: var(--soft-2);
+}
+
+:global(html[data-theme="dark"]) .editTrack strong {
+  color: var(--text);
+}
+
+:global(html[data-theme="dark"]) .editTrack span,
+:global(html[data-theme="dark"]) .editField label {
+  color: var(--muted);
+}
+
+:global(html[data-theme="dark"]) .editTextarea,
+:global(html[data-theme="dark"]) .editInput {
+  color: var(--text);
+
+  border-color:
+    rgba(255, 255, 255, 0.09);
+
+  background: var(--input-bg);
+}
+
+:global(html[data-theme="dark"]) .editTextarea:focus,
+:global(html[data-theme="dark"]) .editInput:focus {
+  border-color:
+    rgba(255, 255, 255, 0.20);
+
+  box-shadow:
+    0 0 0 4px
+      rgba(255, 255, 255, 0.035);
+}
+
+:global(html[data-theme="dark"]) .cancelButton {
+  color: var(--text);
+
+  border-color:
+    rgba(255, 255, 255, 0.09);
+
+  background: var(--soft);
+}
+
+:global(html[data-theme="dark"]) .saveButton {
+  color: var(--button-dark-text);
+
+  border-color:
+    var(--button-dark);
+
+  background:
+    var(--button-dark);
+}
+
+/* mobile */
+
+@media (max-width: 760px) {
+  :global(html[data-theme="dark"]) .post {
+    background:
+      rgba(26, 26, 23, 0.97);
+
+    backdrop-filter:
+      blur(20px)
+      saturate(110%);
+
+    -webkit-backdrop-filter:
+      blur(20px)
+      saturate(110%);
+  }
+
+  :global(html[data-theme="dark"]) .review {
+    border-color:
+      rgba(99, 177, 132, 0.18);
+
+    box-shadow:
+      0 15px 42px
+        rgba(0, 0, 0, 0.25),
+      0 0 28px
+        rgba(73, 139, 101, 0.045);
+  }
+
+  :global(html[data-theme="dark"]) .review.badReview {
+    border-color:
+      rgba(224, 151, 84, 0.19);
+
+    box-shadow:
+      0 15px 42px
+        rgba(0, 0, 0, 0.25),
+      0 0 28px
+        rgba(211, 132, 61, 0.05);
+  }
+
+  :global(html[data-theme="dark"]) .memory {
+    border-color:
+      rgba(158, 126, 216, 0.19);
+
+    box-shadow:
+      0 15px 42px
+        rgba(0, 0, 0, 0.25),
+      0 0 28px
+        rgba(126, 91, 185, 0.05);
+  }
+
+  :global(html[data-theme="dark"]) .editFooter {
+    background:
+      linear-gradient(
+        to top,
+        #191916 72%,
+        rgba(25, 25, 22, 0)
+      );
+  }
+}
+
+/* desktop hover */
+
+@media (hover: hover) {
+  :global(html[data-theme="dark"]) .review:hover {
+    box-shadow:
+      0 0 0 1px
+        rgba(99, 177, 132, 0.10),
+      0 21px 50px
+        rgba(0, 0, 0, 0.28);
+  }
+
+  :global(html[data-theme="dark"]) .review.badReview:hover {
+    box-shadow:
+      0 0 0 1px
+        rgba(224, 151, 84, 0.11),
+      0 21px 50px
+        rgba(0, 0, 0, 0.28);
+  }
+
+  :global(html[data-theme="dark"]) .memory:hover {
+    box-shadow:
+      0 0 0 1px
+        rgba(158, 126, 216, 0.11),
+      0 21px 50px
+        rgba(0, 0, 0, 0.28);
+  }
+}

@@ -4,6 +4,7 @@ import {
   Heart,
   MessageCircle,
   MoreHorizontal,
+  Pencil,
   Repeat2,
   Share,
   Trash2,
@@ -29,8 +30,10 @@ import ShareSheet from "@/components/share/ShareSheet";
 
 export default function PostActions({
   post,
+  onEdit,
 }: {
   post: Post;
+  onEdit?: () => void;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -55,8 +58,36 @@ export default function PostActions({
       post.counts.reposts
     );
 
+  const [likeBusy, setLikeBusy] =
+    useState(false);
+
+  const [
+    repostBusy,
+    setRepostBusy,
+  ] = useState(false);
+
+  const [likePulse, setLikePulse] =
+    useState(false);
+
+  const [
+    repostPulse,
+    setRepostPulse,
+  ] = useState(false);
+
+  const [
+    actionFeedback,
+    setActionFeedback,
+  ] = useState("");
+
   const [comments, setComments] =
     useState(false);
+
+  const [
+    commentCount,
+    setCommentCount,
+  ] = useState(
+    post.counts.comments
+  );
 
   const [share, setShare] =
     useState(false);
@@ -77,6 +108,20 @@ export default function PostActions({
 
   const [deleteError, setDeleteError] =
     useState("");
+
+  /*
+   * Se o feed/perfil receber uma contagem nova do servidor,
+   * sincroniza o número local. Isso evita alternar entre
+   * valor antigo do card e valor atualizado do CommentsSheet.
+   */
+  useEffect(() => {
+    setCommentCount(
+      post.counts.comments
+    );
+  }, [
+    post.counts.comments,
+    post.id,
+  ]);
 
   /*
    * =====================================================
@@ -114,6 +159,23 @@ export default function PostActions({
     };
   }, [post.author.id]);
 
+  function flashFeedback(
+    message: string
+  ) {
+    setActionFeedback(
+      message
+    );
+
+    window.setTimeout(
+      () => {
+        setActionFeedback(
+          ""
+        );
+      },
+      1300
+    );
+  }
+
   /*
    * =====================================================
    * LIKE
@@ -121,16 +183,42 @@ export default function PostActions({
    */
 
   async function toggleLike() {
-    const before = liked;
+    if (likeBusy) {
+      return;
+    }
 
-    setLiked(!before);
+    const before = liked;
+    const next = !before;
+
+    setLiked(next);
 
     setLikes((current) =>
-      current +
-      (before ? -1 : 1)
+      Math.max(
+        0,
+        current +
+          (before ? -1 : 1)
+      )
     );
 
-    if (IS_DEMO) return;
+    setLikePulse(true);
+
+    window.setTimeout(
+      () => {
+        setLikePulse(false);
+      },
+      190
+    );
+
+    if (IS_DEMO) {
+      flashFeedback(
+        next
+          ? "curtido."
+          : "curtida removida."
+      );
+      return;
+    }
+
+    setLikeBusy(true);
 
     try {
       const supabase =
@@ -142,6 +230,20 @@ export default function PostActions({
         await supabase.auth.getUser();
 
       if (!user) {
+        /*
+         * Como a ação foi otimista, volta o estado antes
+         * de mandar a pessoa para o login.
+         */
+        setLiked(before);
+
+        setLikes((current) =>
+          Math.max(
+            0,
+            current +
+              (before ? 1 : -1)
+          )
+        );
+
         location.href =
           `/login?next=${encodeURIComponent(
             location.pathname
@@ -176,13 +278,28 @@ export default function PostActions({
       if (error) {
         throw error;
       }
+
+      flashFeedback(
+        next
+          ? "curtido."
+          : "curtida removida."
+      );
     } catch {
       setLiked(before);
 
       setLikes((current) =>
-        current +
-        (before ? 1 : -1)
+        Math.max(
+          0,
+          current +
+            (before ? 1 : -1)
+        )
       );
+
+      flashFeedback(
+        "não consegui atualizar a curtida."
+      );
+    } finally {
+      setLikeBusy(false);
     }
   }
 
@@ -193,21 +310,48 @@ export default function PostActions({
    */
 
   async function toggleRepost() {
-    if (isOwnPost) {
+    if (
+      isOwnPost ||
+      repostBusy
+    ) {
       return;
     }
 
     const before =
       reposted;
 
-    setReposted(!before);
+    const next =
+      !before;
+
+    setReposted(next);
 
     setReposts((current) =>
-      current +
-      (before ? -1 : 1)
+      Math.max(
+        0,
+        current +
+          (before ? -1 : 1)
+      )
     );
 
-    if (IS_DEMO) return;
+    setRepostPulse(true);
+
+    window.setTimeout(
+      () => {
+        setRepostPulse(false);
+      },
+      220
+    );
+
+    if (IS_DEMO) {
+      flashFeedback(
+        next
+          ? "repostado."
+          : "repost desfeito."
+      );
+      return;
+    }
+
+    setRepostBusy(true);
 
     try {
       const supabase =
@@ -219,6 +363,19 @@ export default function PostActions({
         await supabase.auth.getUser();
 
       if (!user) {
+        setReposted(before);
+
+        setReposts(
+          (current) =>
+            Math.max(
+              0,
+              current +
+                (before
+                  ? 1
+                  : -1)
+            )
+        );
+
         location.href =
           `/login?next=${encodeURIComponent(
             location.pathname
@@ -226,11 +383,6 @@ export default function PostActions({
 
         return;
       }
-
-      /*
-       * Segunda proteção.
-       * A RLS também protege isso.
-       */
 
       if (
         user.id ===
@@ -240,10 +392,13 @@ export default function PostActions({
 
         setReposts(
           (current) =>
-            current +
-            (before
-              ? 1
-              : -1)
+            Math.max(
+              0,
+              current +
+                (before
+                  ? 1
+                  : -1)
+            )
         );
 
         return;
@@ -277,13 +432,28 @@ export default function PostActions({
       if (error) {
         throw error;
       }
+
+      flashFeedback(
+        next
+          ? "repostado."
+          : "repost desfeito."
+      );
     } catch {
       setReposted(before);
 
       setReposts((current) =>
-        current +
-        (before ? 1 : -1)
+        Math.max(
+          0,
+          current +
+            (before ? 1 : -1)
+        )
       );
+
+      flashFeedback(
+        "não consegui atualizar o repost."
+      );
+    } finally {
+      setRepostBusy(false);
     }
   }
 
@@ -479,19 +649,46 @@ export default function PostActions({
             className={`iconBtn ${
               liked ? "on" : ""
             }`}
-            aria-label="Curtir"
+            aria-label={
+              liked
+                ? "Remover curtida"
+                : "Curtir"
+            }
+            aria-pressed={liked}
+            disabled={likeBusy}
             onClick={
               toggleLike
             }
+            style={{
+              opacity:
+                likeBusy
+                  ? 0.72
+                  : 1,
+            }}
           >
-            <Heart
-              size={19}
-              fill={
-                liked
-                  ? "currentColor"
-                  : "none"
-              }
-            />
+            <span
+              style={{
+                display:
+                  "inline-grid",
+                placeItems:
+                  "center",
+                transform:
+                  likePulse
+                    ? "scale(1.22)"
+                    : "scale(1)",
+                transition:
+                  "transform 170ms cubic-bezier(.2,.8,.2,1)",
+              }}
+            >
+              <Heart
+                size={19}
+                fill={
+                  liked
+                    ? "currentColor"
+                    : "none"
+                }
+              />
+            </span>
 
             <small>
               {likes || ""}
@@ -512,9 +709,7 @@ export default function PostActions({
             />
 
             <small>
-              {post.counts
-                .comments ||
-                ""}
+              {commentCount || ""}
             </small>
           </button>
 
@@ -536,27 +731,48 @@ export default function PostActions({
                 ? "Você não pode repostar sua própria publicação"
                 : undefined
             }
+            aria-pressed={
+              reposted
+            }
             disabled={
-              isOwnPost
+              isOwnPost ||
+              repostBusy
             }
             onClick={
               toggleRepost
             }
-            style={
-              isOwnPost
-                ? {
-                    opacity:
-                      0.35,
+            style={{
+              opacity:
+                isOwnPost
+                  ? 0.35
+                  : repostBusy
+                    ? 0.72
+                    : 1,
 
-                    cursor:
-                      "not-allowed",
-                  }
-                : undefined
-            }
+              cursor:
+                isOwnPost
+                  ? "not-allowed"
+                  : "pointer",
+            }}
           >
-            <Repeat2
-              size={20}
-            />
+            <span
+              style={{
+                display:
+                  "inline-grid",
+                placeItems:
+                  "center",
+                transform:
+                  repostPulse
+                    ? "rotate(-10deg) scale(1.13)"
+                    : "rotate(0deg) scale(1)",
+                transition:
+                  "transform 190ms cubic-bezier(.2,.8,.2,1)",
+              }}
+            >
+              <Repeat2
+                size={20}
+              />
+            </span>
 
             <small>
               {reposts || ""}
@@ -638,65 +854,120 @@ export default function PostActions({
                   18,
 
                 background:
-                  "rgba(255,255,255,.98)",
+                  "var(--surface-solid)",
 
                 border:
-                  "1px solid rgba(0,0,0,.08)",
+                  "1px solid var(--line)",
 
                 boxShadow:
-                  "0 18px 50px rgba(0,0,0,.14)",
+                  "var(--shadow)",
               }}
             >
               {!confirmDelete ? (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setConfirmDelete(
-                      true
-                    )
-                  }
-                  style={{
-                    width:
-                      "100%",
+                <div>
+                  {onEdit && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(
+                          false
+                        );
+                        onEdit();
+                      }}
+                      style={{
+                        width:
+                          "100%",
 
-                    display:
-                      "flex",
+                        display:
+                          "flex",
 
-                    alignItems:
-                      "center",
+                        alignItems:
+                          "center",
 
-                    gap: 10,
+                        gap: 10,
 
-                    border: 0,
+                        border: 0,
 
-                    padding:
-                      "12px 13px",
+                        padding:
+                          "12px 13px",
 
-                    borderRadius:
-                      12,
+                        borderRadius:
+                          12,
 
-                    background:
-                      "transparent",
+                        background:
+                          "transparent",
 
-                    color:
-                      "#b42318",
+                        color:
+                          "var(--text)",
 
-                    font:
-                      "inherit",
+                        font:
+                          "inherit",
 
-                    cursor:
-                      "pointer",
+                        cursor:
+                          "pointer",
 
-                    textAlign:
-                      "left",
-                  }}
-                >
-                  <Trash2
-                    size={17}
-                  />
+                        textAlign:
+                          "left",
+                      }}
+                    >
+                      <Pencil
+                        size={17}
+                      />
 
-                  excluir publicação
-                </button>
+                      editar publicação
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setConfirmDelete(
+                        true
+                      )
+                    }
+                    style={{
+                      width:
+                        "100%",
+
+                      display:
+                        "flex",
+
+                      alignItems:
+                        "center",
+
+                      gap: 10,
+
+                      border: 0,
+
+                      padding:
+                        "12px 13px",
+
+                      borderRadius:
+                        12,
+
+                      background:
+                        "transparent",
+
+                      color:
+                        "#b42318",
+
+                      font:
+                        "inherit",
+
+                      cursor:
+                        "pointer",
+
+                      textAlign:
+                        "left",
+                    }}
+                  >
+                    <Trash2
+                      size={17}
+                    />
+
+                    excluir publicação
+                  </button>
+                </div>
               ) : (
                 <div
                   style={{
@@ -834,6 +1105,44 @@ export default function PostActions({
               )}
             </div>
           )}
+        <span
+          aria-live="polite"
+          aria-atomic="true"
+          style={{
+            position:
+              "absolute",
+            left: "50%",
+            bottom: -22,
+            zIndex: 3,
+            transform:
+              "translateX(-50%)",
+            maxWidth: 220,
+            overflow:
+              "hidden",
+            color:
+              actionFeedback.includes(
+                "não consegui"
+              )
+                ? "#a83a32"
+                : "#767670",
+            fontSize: 10,
+            fontWeight: 600,
+            textOverflow:
+              "ellipsis",
+            whiteSpace:
+              "nowrap",
+            pointerEvents:
+              "none",
+            opacity:
+              actionFeedback
+                ? 1
+                : 0,
+            transition:
+              "opacity 160ms ease",
+          }}
+        >
+          {actionFeedback}
+        </span>
       </div>
 
       {/* COMMENTS */}
@@ -843,6 +1152,13 @@ export default function PostActions({
         open={comments}
         onClose={() =>
           setComments(false)
+        }
+        onCommentCountChange={(
+          count
+        ) =>
+          setCommentCount(
+            count
+          )
         }
       />
 

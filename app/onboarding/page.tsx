@@ -426,52 +426,64 @@ export default function Onboarding() {
     !saving;
 
   return (
-    <main className="shell">
-      <div className="authCard">
-        <div className="brand">
-          aux.
+    <main className="shell authPage onboardingPage">
+      <div className="authCard authCardAUX onboardingCard">
+        <div className="onboardingTop">
+          <div className="brand">
+            aux.
+          </div>
+
+          <span className="onboardingStep">
+            seu perfil
+          </span>
         </div>
 
-        <h1>
-          quem tá no AUX?
-        </h1>
+        <div className="authIntro onboardingIntro">
+          <h1>
+            quem tá no AUX?
+          </h1>
 
-        <p>
-          seu perfil é seu gosto
-          musical. o resto você
-          completa depois.
-        </p>
+          <p>
+            seu perfil é seu gosto
+            musical. o resto você
+            completa depois.
+          </p>
+        </div>
 
-        <div className="stack">
-          <input
-            className="field"
-            value={name}
-            onChange={(
-              event
-            ) =>
-              setName(
-                event.target.value
-              )
-            }
-            maxLength={60}
-            placeholder="nome"
-          />
+        <div className="stack onboardingStack">
+          <label className="authFieldGroup">
+            <span className="authLabel">
+              nome
+            </span>
 
-          <div>
             <input
               className="field"
-              value={
-                username
+              value={name}
+              onChange={(event) =>
+                setName(
+                  event.target.value
+                )
               }
-              onChange={(
-                event
-              ) => {
+              maxLength={60}
+              autoComplete="name"
+              placeholder="seu nome"
+            />
+          </label>
+
+          <label className="authFieldGroup">
+            <span className="authLabel">
+              username
+            </span>
+
+            <input
+              className="field"
+              value={username}
+              onChange={(event) => {
                 setError("");
 
                 setUsername(
                   cleanUsername(
-                    event.target
-                      .value
+                    event.target.value
                   )
                 );
               }}
@@ -484,83 +496,81 @@ export default function Onboarding() {
 
             {handle && (
               <div
-                style={{
-                  padding:
-                    "8px 4px 0",
-                  fontSize: 12,
-                }}
+                className="usernameStatus"
+                aria-live="polite"
               >
                 {usernameStatus ===
                   "checking" && (
                   <span className="subtle">
-                    conferindo
-                    @{handle}...
+                    conferindo @{handle}...
                   </span>
                 )}
 
                 {usernameStatus ===
                   "available" && (
-                  <span
-                    style={{
-                      color:
-                        "#39734d",
-                    }}
-                  >
-                    @{handle} está
-                    disponível
+                  <span className="usernameAvailable">
+                    @{handle} está disponível
                   </span>
                 )}
 
                 {usernameStatus ===
                   "taken" && (
-                  <span
-                    style={{
-                      color:
-                        "#b42318",
-                    }}
-                  >
-                    @{handle} já
-                    está em uso
+                  <span className="usernameTaken">
+                    @{handle} já está em uso
                   </span>
                 )}
 
                 {usernameStatus ===
                   "invalid" && (
                   <span className="subtle">
-                    use pelo menos
-                    3 caracteres
+                    use pelo menos 3 caracteres
                   </span>
                 )}
               </div>
             )}
-          </div>
+          </label>
 
-          <textarea
-            className="field"
-            value={bio}
-            onChange={(
-              event
-            ) =>
-              setBio(
-                event.target.value
-              )
-            }
-            maxLength={180}
-            placeholder="bio opcional"
-          />
+          <label className="authFieldGroup">
+            <span className="authLabel">
+              bio
+              <small> opcional</small>
+            </span>
 
-          <label className="secondary">
-            {avatar
-              ? avatar.name
-              : "escolher avatar"}
+            <textarea
+              className="field onboardingBio"
+              value={bio}
+              onChange={(event) =>
+                setBio(
+                  event.target.value
+                )
+              }
+              maxLength={180}
+              placeholder="alguma coisa sobre você."
+            />
+
+            <span className="onboardingCount">
+              {bio.length}/180
+            </span>
+          </label>
+
+          <label className="secondary avatarPicker">
+            <span>
+              {avatar
+                ? "avatar escolhido"
+                : "escolher avatar"}
+            </span>
+
+            <small>
+              {avatar
+                ? avatar.name
+                : "jpg, png ou webp · até 5 MB"}
+            </small>
 
             <input
               hidden
               type="file"
               accept="image/*"
-              onChange={(
-                event
-              ) =>
+              onChange={(event) =>
                 setAvatar(
                   event.target
                     .files?.[0] ||
@@ -571,13 +581,17 @@ export default function Onboarding() {
           </label>
 
           {error && (
-            <div className="error">
+            <div
+              className="error onboardingError"
+              role="alert"
+            >
               {error}
             </div>
           )}
 
           <button
-            className="primary"
+            type="button"
+            className="primary onboardingPrimary"
             onClick={() =>
               void save()
             }

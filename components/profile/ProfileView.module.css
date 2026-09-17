@@ -1,0 +1,142 @@
+.profileInfo {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/*
+ * O mobile continua usando exatamente o layout atual.
+ * Todas as mudanças abaixo começam apenas no desktop.
+ */
+@media (min-width: 900px) {
+  .page {
+    padding-bottom: 64px;
+  }
+
+  .topbar {
+    width: 100%;
+    max-width: 700px !important;
+    margin-inline: auto;
+  }
+
+  /*
+   * No desktop o cabeçalho deixa de parecer um perfil mobile
+   * esticado: avatar à esquerda, identidade à direita.
+   */
+  .profileHero {
+    width: 100%;
+    max-width: 700px;
+    margin: 24px auto 0;
+
+    display: grid !important;
+    grid-template-columns: 132px minmax(0, 1fr);
+    align-items: center !important;
+    gap: 32px;
+
+    padding: 30px 32px !important;
+
+    text-align: left !important;
+
+    border: 1px solid rgba(0, 0, 0, 0.055);
+    border-radius: 30px;
+
+    background:
+      rgba(255, 255, 255, 0.62);
+
+    box-shadow:
+      0 18px 54px rgba(0, 0, 0, 0.045);
+
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  .avatar {
+    width: 132px !important;
+    height: 132px !important;
+    margin-bottom: 0 !important;
+  }
+
+  .profileInfo {
+    min-width: 0;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .profileInfo h1 {
+    font-size: 36px !important;
+  }
+
+  .profileInfo p {
+    max-width: 460px !important;
+    margin-top: 14px !important;
+  }
+
+  /*
+   * Top, tabs e feed passam a compartilhar o mesmo eixo.
+   * Isso deixa a página mais centralizada e intencional.
+   */
+  .topSection {
+    width: 100%;
+    max-width: 700px;
+    margin: 24px auto 0 !important;
+  }
+
+  .tabsSpacer {
+    height: 14px !important;
+  }
+
+  .tabs {
+    width: 100%;
+    max-width: 700px;
+    margin-inline: auto;
+  }
+
+  .feed {
+    width: 100%;
+    max-width: 700px !important;
+    margin-inline: auto;
+  }
+
+  /*
+   * DARK MODE — somente desktop.
+   * O antigo rgba branco deixava o hero cinza claro.
+   * No mobile o perfil continua sem esse card desktop.
+   */
+  :global(html[data-theme="dark"]) .profileHero {
+    color: var(--text);
+
+    border-color:
+      rgba(255, 255, 255, 0.085);
+
+    background:
+      rgba(27, 27, 24, 0.84);
+
+    box-shadow:
+      0 20px 62px
+        rgba(0, 0, 0, 0.24);
+
+    backdrop-filter:
+      blur(20px)
+      saturate(115%);
+
+    -webkit-backdrop-filter:
+      blur(20px)
+      saturate(115%);
+  }
+
+  :global(html[data-theme="dark"]) .profileInfo h1 {
+    color: var(--text);
+  }
+
+  :global(html[data-theme="dark"]) .profileInfo p {
+    color: var(--text);
+  }
+}
+
+@media (min-width: 1200px) {
+  .profileHero {
+    margin-top: 30px;
+  }
+}

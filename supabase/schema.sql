@@ -39,10 +39,39 @@ create table public.tracks (
   unique(provider, provider_track_id)
 );
 
+-- Up to five songs chosen by each user for their profile.
+create table public.profile_top_tracks (
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  track_id uuid not null references public.tracks(id) on delete cascade,
+  position smallint not null check (position between 0 and 4),
+  created_at timestamptz not null default now(),
+  primary key(user_id, track_id),
+  unique(user_id, position)
+);
+
+
+create table public.albums (
+  id uuid primary key default gen_random_uuid(),
+  provider public.music_provider not null,
+  provider_album_id text,
+  title text not null check (char_length(title) between 1 and 300),
+  artist text not null check (char_length(artist) between 1 and 300),
+  artwork_url text,
+  source_url text not null,
+  spotify_url text,
+  apple_music_url text,
+  deezer_url text,
+  release_date date,
+  total_tracks integer check (total_tracks is null or total_tracks > 0),
+  created_at timestamptz not null default now(),
+  unique(provider, provider_album_id)
+);
+
 create table public.posts (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
-  track_id uuid not null references public.tracks(id) on delete restrict,
+  track_id uuid references public.tracks(id) on delete restrict,
+  album_id uuid references public.albums(id) on delete restrict,
   type public.post_type not null,
   body text not null check (char_length(body) between 1 and 4000),
   rating numeric(2,1),
@@ -50,6 +79,15 @@ create table public.posts (
   visibility public.post_visibility not null default 'public',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
+
+  constraint posts_subject_exactly_one check (
+    num_nonnulls(track_id, album_id) = 1
+  ),
+
+  constraint album_posts_are_reviews check (
+    album_id is null or type = 'review'
+  ),
+
   constraint post_rating_rule check (
     (type='review' and rating between 0.5 and 5.0 and mod((rating*10)::int,5)=0)
     or (type='memory' and rating is null)
@@ -140,6 +178,9 @@ create table public.list_likes (
 create index posts_created_idx on public.posts(created_at desc);
 create index posts_user_created_idx on public.posts(user_id, created_at desc);
 create index posts_track_idx on public.posts(track_id, created_at desc);
+create index posts_album_idx on public.posts(album_id, created_at desc);
+create index albums_title_search_idx on public.albums(lower(title));
+create index albums_artist_search_idx on public.albums(lower(artist));
 create index comments_post_created_idx on public.comments(post_id, created_at);
 create index notifications_recipient_created_idx on public.notifications(recipient_id, created_at desc);
 create index follows_following_idx on public.follows(following_id);
@@ -147,6 +188,9 @@ create index likes_post_idx on public.likes(post_id);
 create index reposts_post_idx on public.reposts(post_id);
 create index tracks_title_search_idx on public.tracks(lower(title));
 create index tracks_artist_search_idx on public.tracks(lower(artist));
+create index profile_top_tracks_user_position_idx
+on public.profile_top_tracks(user_id, position);
+
 
 create or replace function public.set_updated_at() returns trigger language plpgsql as $$
 begin new.updated_at = now(); return new; end; $$;
@@ -318,6 +362,8 @@ execute function public.remove_follow_notification();
 
 alter table public.profiles enable row level security;
 alter table public.tracks enable row level security;
+alter table public.albums enable row level security;
+alter table public.profile_top_tracks enable row level security;
 alter table public.posts enable row level security;
 alter table public.post_media enable row level security;
 alter table public.follows enable row level security;
@@ -334,6 +380,41 @@ create policy profiles_update_own on public.profiles for update using(auth.uid()
 
 create policy tracks_read on public.tracks for select using(true);
 create policy tracks_insert_auth on public.tracks for insert to authenticated with check(auth.uid() is not null);
+
+create policy albums_read
+on public.albums
+for select
+using(true);
+
+create policy albums_insert_auth
+on public.albums
+for insert
+to authenticated
+with check(auth.uid() is not null);
+
+create policy profile_top_tracks_read
+on public.profile_top_tracks
+for select
+using(true);
+
+create policy profile_top_tracks_insert_own
+on public.profile_top_tracks
+for insert
+to authenticated
+with check(user_id=auth.uid());
+
+create policy profile_top_tracks_update_own
+on public.profile_top_tracks
+for update
+to authenticated
+using(user_id=auth.uid())
+with check(user_id=auth.uid());
+
+create policy profile_top_tracks_delete_own
+on public.profile_top_tracks
+for delete
+to authenticated
+using(user_id=auth.uid());
 
 create policy posts_read on public.posts for select using(
  visibility='public' or user_id=auth.uid() or (visibility='followers' and exists(select 1 from public.follows f where f.follower_id=auth.uid() and f.following_id=user_id))
