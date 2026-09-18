@@ -777,3 +777,16 @@
       rgba(255, 255, 255, 0.085);
   }
 }
+
+/* =========================================================
+   AUX — iOS / EVITAR AUTO-ZOOM NO CAMPO DE COMENTÁRIO
+   =========================================================
+   Safari no iPhone aplica zoom automático ao focar inputs
+   com fonte menor que 16px. Mantemos 13px no desktop e
+   usamos 16px apenas no mobile.
+*/
+@media (max-width: 759px) {
+  .form input {
+    font-size: 16px;
+  }
+}
