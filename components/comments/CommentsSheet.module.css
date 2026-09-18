@@ -790,3 +790,42 @@
     font-size: 16px;
   }
 }
+
+/* =========================================================
+   AUX — iOS / TECLADO + VISUAL VIEWPORT
+   =========================================================
+   O TSX sincroniza o backdrop com window.visualViewport.
+   Quando o teclado abre, o sheet usa somente a área que
+   continua realmente visível no Safari.
+*/
+@media (max-width: 759px) {
+  .backdrop {
+    inset: auto 0 auto 0;
+    bottom: auto;
+
+    width: 100vw;
+
+    align-items: flex-end;
+
+    overflow: hidden;
+  }
+
+  .sheet {
+    width: 100%;
+    max-height: 100%;
+
+    padding-bottom:
+      max(
+        10px,
+        env(safe-area-inset-bottom)
+      );
+  }
+
+  .list {
+    min-height: 0;
+  }
+
+  .form input {
+    font-size: 16px;
+  }
+}

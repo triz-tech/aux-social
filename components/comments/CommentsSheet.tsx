@@ -163,6 +163,14 @@ export default function CommentsSheet({
       null
     );
 
+  const [
+    viewportStyle,
+    setViewportStyle,
+  ] = useState<{
+    height?: string;
+    top?: string;
+  }>({});
+
   async function loadComments(
     options?: {
       silent?: boolean;
@@ -858,6 +866,68 @@ export default function CommentsSheet({
     );
   }
 
+  useEffect(() => {
+    if (!open) {
+      setViewportStyle({});
+      return;
+    }
+
+    const viewportCandidate =
+      window.visualViewport;
+
+    if (!viewportCandidate) {
+      return;
+    }
+
+    /*
+     * Depois da checagem acima, congelamos a referência
+     * como VisualViewport não-null. Assim o TypeScript
+     * mantém o narrowing também dentro do callback do
+     * requestAnimationFrame.
+     */
+    const visualViewport: VisualViewport =
+      viewportCandidate;
+
+    let frame = 0;
+
+    function syncViewport() {
+      cancelAnimationFrame(frame);
+
+      frame = requestAnimationFrame(
+        () => {
+          setViewportStyle({
+            height: `${visualViewport.height}px`,
+            top: `${visualViewport.offsetTop}px`,
+          });
+        }
+      );
+    }
+
+    syncViewport();
+
+    visualViewport.addEventListener(
+      "resize",
+      syncViewport
+    );
+    visualViewport.addEventListener(
+      "scroll",
+      syncViewport
+    );
+
+    return () => {
+      cancelAnimationFrame(frame);
+
+      visualViewport.removeEventListener(
+        "resize",
+        syncViewport
+      );
+      visualViewport.removeEventListener(
+        "scroll",
+        syncViewport
+      );
+    };
+  }, [open]);
+
   if (!open) {
     return null;
   }
@@ -874,6 +944,7 @@ export default function CommentsSheet({
       className={
         styles.backdrop
       }
+      style={viewportStyle}
       role="presentation"
       onMouseDown={(
         event
