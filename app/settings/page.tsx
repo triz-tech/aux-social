@@ -31,6 +31,18 @@ export default function Settings() {
   const [avatarPreview, setAvatarPreview] =
     useState<string | null>(null);
 
+  const [
+  deleteAccountOpen,
+  setDeleteAccountOpen,
+] = useState(false);
+
+const [
+  deletingAccount,
+  setDeletingAccount,
+] = useState(false);
+
+
+
   const [avatarToCrop, setAvatarToCrop] =
   useState<string | null>(null);  
 
@@ -361,6 +373,42 @@ function chooseAvatar(
     router.refresh();
   }
 
+  async function deleteAccount() {
+    setDeletingAccount(true);
+    setError("");
+
+    try {
+      const response = await fetch(
+        "/api/account/delete",
+        {
+          method: "POST",
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "Não consegui excluir sua conta."
+        );
+      }
+
+      router.push("/");
+      router.refresh();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Não consegui excluir sua conta."
+      );
+
+      setDeleteAccountOpen(false);
+    } finally {
+      setDeletingAccount(false);
+    }
+  }
+
   /*
    * =====================================================
    * LOADING
@@ -389,6 +437,98 @@ function chooseAvatar(
 
   return (
     <main className="shell settingsPage">
+      {deleteAccountOpen && (
+  <div
+    style={{
+      position: "fixed",
+      inset: 0,
+      zIndex: 9999,
+      background: "rgba(0,0,0,.55)",
+      display: "grid",
+      placeItems: "center",
+      padding: 20,
+    }}
+  >
+    <div
+      style={{
+        width: "100%",
+        maxWidth: 390,
+        background: "var(--bg)",
+        border: "1px solid var(--line)",
+        borderRadius: 24,
+        padding: 24,
+      }}
+    >
+      <span
+        className="subtle"
+        style={{
+          display: "block",
+          marginBottom: 8,
+        }}
+      >
+        excluir conta
+      </span>
+
+      <h2
+        style={{
+          margin: "0 0 10px",
+          fontSize: 24,
+        }}
+      >
+        tem certeza?
+      </h2>
+
+      <p
+        className="subtle"
+        style={{
+          lineHeight: 1.5,
+          marginBottom: 22,
+        }}
+      >
+        sua conta, perfil,
+        publicações e dados do AUX
+        serão excluídos
+        permanentemente.
+      </p>
+
+      <div
+        style={{
+          display: "grid",
+          gap: 10,
+        }}
+      >
+        <button
+          type="button"
+          className="secondary"
+          onClick={() =>
+            setDeleteAccountOpen(false)
+          }
+          disabled={deletingAccount}
+        >
+          cancelar
+        </button>
+
+        <button
+          type="button"
+          className="secondary"
+          onClick={() =>
+            void deleteAccount()
+          }
+          disabled={deletingAccount}
+          style={{
+            color: "#b42318",
+            borderColor:
+              "rgba(180,35,24,.25)",
+          }}
+        >
+          {deletingAccount
+            ? "excluindo..."
+            : "excluir permanentemente"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {avatarToCrop && (
   <AvatarCropper
@@ -633,32 +773,56 @@ function chooseAvatar(
         </button>
 
         <TopFiveEditor
-          userId={userId}
-        />
+  userId={userId}
+/>
 
-        <div
-          style={{
-            height: 20,
-          }}
-        />
+<div
+  style={{
+    marginTop: 32,
+    paddingTop: 24,
+    borderTop: "1px solid var(--line)",
+  }}
+>
+  <span
+    className="subtle"
+    style={{
+      display: "block",
+      marginBottom: 10,
+    }}
+  >
+    zona de perigo
+  </span>
 
-        <button
-          className="secondary"
-          onClick={() =>
-            void logout()
-          }
-          style={{
-            display: "flex",
-            alignItems:
-              "center",
-            justifyContent:
-              "center",
-            gap: 8,
-          }}
-        >
-          <LogOut size={17} />
-          sair da conta
-        </button>
+  <button
+    type="button"
+    className="secondary"
+    onClick={() =>
+      setDeleteAccountOpen(true)
+    }
+    style={{
+      width: "100%",
+      color: "#b42318",
+    }}
+  >
+    excluir minha conta
+  </button>
+</div>
+
+<div
+  style={{
+    height: 20,
+  }}
+/>
+
+<button
+  className="secondary"
+  onClick={() =>
+    void logout()
+  }
+>
+  <LogOut size={17} />
+  sair da conta
+</button>
         </div>
       </div>
     </main>
