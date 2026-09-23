@@ -708,8 +708,7 @@ export default function TopFiveEditor({
             lineHeight: 1.4,
           }}
         >
-          escolha até cinco. a quantidade também muda
-          como elas aparecem no seu perfil.
+          escolha até cinco músicas para destacar no seu perfil.
         </p>
       </div>
 

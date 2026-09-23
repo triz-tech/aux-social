@@ -5,8 +5,10 @@ import {
   useState,
 } from "react";
 
+import { Camera } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import AvatarCropper from "@/components/profile/AvatarCropper";
 import { createClient } from "@/lib/supabase/client";
 import { IS_DEMO } from "@/lib/config";
 
@@ -41,6 +43,20 @@ export default function Onboarding() {
 
   const [avatar, setAvatar] =
     useState<File | null>(null);
+
+  const [
+    avatarPreview,
+    setAvatarPreview,
+  ] = useState<string | null>(
+    null
+  );
+
+  const [
+    avatarToCrop,
+    setAvatarToCrop,
+  ] = useState<string | null>(
+    null
+  );
 
   const [
     usernameStatus,
@@ -160,6 +176,51 @@ export default function Onboarding() {
       );
     };
   }, [username]);
+
+  /*
+   * =============================================
+   * ESCOLHER E RECORTAR AVATAR
+   * =============================================
+   */
+
+  function chooseAvatar(
+    file: File | undefined
+  ) {
+    if (!file) return;
+
+    setError("");
+
+    if (
+      !file.type.startsWith(
+        "image/"
+      )
+    ) {
+      setError(
+        "escolha uma imagem."
+      );
+      return;
+    }
+
+    if (
+      file.size >
+      5 * 1024 * 1024
+    ) {
+      setError(
+        "a imagem precisa ter até 5 MB."
+      );
+      return;
+    }
+
+    if (avatarToCrop) {
+      URL.revokeObjectURL(
+        avatarToCrop
+      );
+    }
+
+    setAvatarToCrop(
+      URL.createObjectURL(file)
+    );
+  }
 
   /*
    * =============================================
@@ -427,6 +488,39 @@ export default function Onboarding() {
 
   return (
     <main className="shell authPage onboardingPage">
+      {avatarToCrop && (
+        <AvatarCropper
+          image={avatarToCrop}
+          onCancel={() => {
+            URL.revokeObjectURL(
+              avatarToCrop
+            );
+
+            setAvatarToCrop(null);
+          }}
+          onSave={(
+            file,
+            preview
+          ) => {
+            if (avatarPreview) {
+              URL.revokeObjectURL(
+                avatarPreview
+              );
+            }
+
+            URL.revokeObjectURL(
+              avatarToCrop
+            );
+
+            setAvatar(file);
+            setAvatarPreview(
+              preview
+            );
+            setAvatarToCrop(null);
+          }}
+        />
+      )}
+
       <div className="authCard authCardAUX onboardingCard">
         <div className="onboardingTop">
           <div className="brand">
@@ -448,6 +542,125 @@ export default function Onboarding() {
             musical. o resto você
             completa depois.
           </p>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            justifyItems: "center",
+            gap: 8,
+            margin:
+              "4px 0 30px",
+          }}
+        >
+          <label
+            htmlFor="onboarding-avatar"
+            aria-label={
+              avatarPreview
+                ? "Trocar foto de perfil"
+                : "Adicionar foto de perfil"
+            }
+            style={{
+              width: 112,
+              height: 112,
+              borderRadius: "50%",
+              overflow: "hidden",
+              position: "relative",
+              display: "grid",
+              placeItems: "center",
+              cursor: "pointer",
+              background:
+                "var(--soft)",
+              border:
+                "1px solid var(--line)",
+            }}
+          >
+            {avatarPreview ? (
+              <img
+                src={avatarPreview}
+                alt="Prévia da sua foto de perfil"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit:
+                    "cover",
+                }}
+              />
+            ) : (
+              <Camera
+                size={30}
+                strokeWidth={1.6}
+                style={{
+                  opacity: 0.5,
+                }}
+              />
+            )}
+
+            <span
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                right: 4,
+                bottom: 4,
+                width: 32,
+                height: 32,
+                borderRadius:
+                  "50%",
+                display: "grid",
+                placeItems:
+                  "center",
+                background:
+                  "var(--surface-solid, #fff)",
+                border:
+                  "1px solid var(--line)",
+              }}
+            >
+              <Camera
+                size={15}
+                strokeWidth={1.8}
+              />
+            </span>
+
+            <input
+              id="onboarding-avatar"
+              hidden
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(event) => {
+                chooseAvatar(
+                  event.target
+                    .files?.[0]
+                );
+
+                event.target.value =
+                  "";
+              }}
+            />
+          </label>
+
+          <label
+            htmlFor="onboarding-avatar"
+            style={{
+              fontSize: 14,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            {avatarPreview
+              ? "trocar foto"
+              : "adicionar foto"}
+          </label>
+
+          <span
+            className="subtle"
+            style={{
+              fontSize: 12,
+              textAlign: "center",
+            }}
+          >
+            opcional · você pode
+            trocar depois
+          </span>
         </div>
 
         <div className="stack onboardingStack">
@@ -533,7 +746,9 @@ export default function Onboarding() {
           <label className="authFieldGroup">
             <span className="authLabel">
               bio
-              <small> opcional</small>
+              <small>
+                {" "}· opcional
+              </small>
             </span>
 
             <textarea
@@ -551,33 +766,6 @@ export default function Onboarding() {
             <span className="onboardingCount">
               {bio.length}/180
             </span>
-          </label>
-
-          <label className="secondary avatarPicker">
-            <span>
-              {avatar
-                ? "avatar escolhido"
-                : "escolher avatar"}
-            </span>
-
-            <small>
-              {avatar
-                ? avatar.name
-                : "jpg, png ou webp · até 5 MB"}
-            </small>
-
-            <input
-              hidden
-              type="file"
-              accept="image/*"
-              onChange={(event) =>
-                setAvatar(
-                  event.target
-                    .files?.[0] ||
-                    null
-                )
-              }
-            />
           </label>
 
           {error && (
