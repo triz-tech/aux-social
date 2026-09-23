@@ -4,6 +4,7 @@ import type {
 } from "next";
 
 import "./globals.css";
+import InstallPrompt from "@/components/pwa/InstallPrompt";
 
 import AppNavigation from "@/components/navigation/AppNavigation";
 
@@ -25,6 +26,23 @@ export const metadata: Metadata = {
 
   applicationName:
     APP_NAME,
+
+  icons: {
+    icon: [
+      {
+        url: "/icon.svg",
+        type: "image/svg+xml",
+      },
+    ],
+
+    apple: [
+      {
+        url: "/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
+  },
 
   manifest:
     "/manifest.webmanifest",
@@ -63,6 +81,7 @@ export default async function RootLayout({
   return (
     <html lang="pt-BR">
       <body>
+        <InstallPrompt />
         {children}
 
         <AppNavigation

@@ -755,7 +755,7 @@ export default function TopFiveEditor() {
                     borderRadius:
                       18,
                     background:
-                      "rgba(255,255,255,.76)",
+                      "var(--surface-solid)",
                   }}
                 >
                   <strong
@@ -777,7 +777,7 @@ export default function TopFiveEditor() {
                       borderRadius:
                         13,
                       background:
-                        "#ececea",
+                        "var(--soft)",
                       display:
                         "grid",
                       placeItems:
@@ -1085,7 +1085,7 @@ export default function TopFiveEditor() {
                           borderRadius:
                             16,
                           background:
-                            "#fff",
+                            "var(--surface-solid)",
                           color:
                             "inherit",
                           textAlign:
@@ -1105,7 +1105,7 @@ export default function TopFiveEditor() {
                             overflow:
                               "hidden",
                             background:
-                              "#ececea",
+                              "var(--soft)",
                             display:
                               "grid",
                             placeItems:

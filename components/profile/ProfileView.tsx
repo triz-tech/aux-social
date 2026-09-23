@@ -1733,7 +1733,7 @@ export default function ProfileView({
                 "10px 18px calc(26px + var(--safe))",
               borderRadius:
                 "30px 30px 0 0",
-              background: "#fbfbfa",
+              background: "var(--surface-solid)",
               boxShadow:
                 "0 -20px 80px rgba(0,0,0,.18)",
             }}
@@ -1745,7 +1745,7 @@ export default function ProfileView({
                 margin:
                   "2px auto 20px",
                 borderRadius: 99,
-                background: "#d2d2d2",
+                background: "var(--line)",
               }}
             />
 
@@ -1766,7 +1766,7 @@ export default function ProfileView({
                 borderRadius: "50%",
                 background:
                   "transparent",
-                color: "#666",
+                color: "var(--muted)",
                 display: "grid",
                 placeItems: "center",
               }}
@@ -1855,7 +1855,7 @@ export default function ProfileView({
                           "1px solid var(--line)",
                         borderRadius: 18,
                         background:
-                          "white",
+                          "var(--surface-solid)",
                         color:
                           "inherit",
                         textAlign:
@@ -2004,7 +2004,7 @@ export default function ProfileView({
                 "10px 18px calc(28px + var(--safe))",
               borderRadius:
                 "30px 30px 0 0",
-              background: "#fbfbfa",
+              background: "var(--surface-solid)",
               boxShadow:
                 "0 -20px 80px rgba(0,0,0,.18)",
             }}
@@ -2016,7 +2016,7 @@ export default function ProfileView({
                 margin:
                   "2px auto 20px",
                 borderRadius: 99,
-                background: "#d2d2d2",
+                background: "var(--line)",
               }}
             />
 
@@ -2037,7 +2037,7 @@ export default function ProfileView({
                 borderRadius: "50%",
                 background:
                   "transparent",
-                color: "#666",
+                color: "var(--muted)",
                 display: "grid",
                 placeItems: "center",
               }}

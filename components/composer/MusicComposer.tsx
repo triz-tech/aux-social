@@ -2444,11 +2444,11 @@ export default function MusicComposer() {
                       "hidden",
                     padding: 6,
                     border:
-                      "1px solid rgba(0,0,0,.08)",
+                      "1px solid var(--line)",
                     borderRadius:
                       16,
                     background:
-                      "rgba(255,255,255,.97)",
+                      "var(--surface-solid)",
                     boxShadow:
                       "0 18px 50px rgba(0,0,0,.12)",
                     backdropFilter:
@@ -2507,7 +2507,7 @@ export default function MusicComposer() {
                           cursor:
                             "pointer",
                           color:
-                            "#222",
+                            "var(--text)",
                           background:
                             "transparent",
                           font:
@@ -2522,7 +2522,7 @@ export default function MusicComposer() {
                             flex:
                               "0 0 auto",
                             color:
-                              "#777772",
+                              "var(--muted)",
                           }}
                         />
 

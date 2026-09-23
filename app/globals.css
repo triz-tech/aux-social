@@ -3628,3 +3628,755 @@ html[data-theme="dark"] .memorySlide {
   }
 }
 
+/* =========================================================
+   AUX — FIRST ACCESS / INSTALL PWA
+   ========================================================= */
+
+.installOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: grid;
+  place-items: center;
+
+  padding:
+    24px
+    18px
+    max(24px, env(safe-area-inset-bottom));
+
+  background:
+    rgba(247, 247, 245, 0.96);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.installCard {
+  position: relative;
+
+  width: min(100%, 420px);
+
+  padding: 30px 24px 24px;
+
+  border:
+    1px solid
+    rgba(0, 0, 0, 0.08);
+
+  border-radius: 30px;
+
+  background:
+    rgba(255, 255, 255, 0.94);
+
+  box-shadow:
+    0 24px 70px
+    rgba(0, 0, 0, 0.10);
+}
+
+.installClose {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+
+  width: 36px;
+  height: 36px;
+
+  display: grid;
+  place-items: center;
+
+  border: 0;
+  border-radius: 50%;
+
+  color: var(--muted);
+  background:
+    rgba(0, 0, 0, 0.04);
+
+  cursor: pointer;
+}
+
+.installIcon {
+  width: 82px;
+  height: 82px;
+
+  display: grid;
+  place-items: center;
+
+  margin-bottom: 28px;
+
+  border-radius: 24px;
+
+  color: white;
+  background: #171715;
+
+  font-family: var(--serif);
+  font-size: 27px;
+  font-weight: 700;
+
+  box-shadow:
+    0 12px 30px
+    rgba(0, 0, 0, 0.15);
+}
+
+.installEyebrow {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: var(--muted);
+
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.installCard h1 {
+  margin: 0 0 12px;
+
+  color: var(--text);
+
+  font-size:
+    clamp(
+      34px,
+      8vw,
+      44px
+    );
+
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+}
+
+.installCard > p {
+  margin: 0 0 24px;
+
+  color: var(--muted);
+
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.installPrimary,
+.installSecondary {
+  width: 100%;
+
+  min-height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  border-radius: 16px;
+
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.installPrimary {
+  border: 0;
+
+  color: white;
+  background: #171715;
+}
+
+.installSecondary {
+  margin-top: 10px;
+
+  border:
+    1px solid
+    var(--line);
+
+  color: var(--text);
+  background: transparent;
+}
+
+.installIOS {
+  display: grid;
+
+  gap: 10px;
+
+  margin-bottom: 12px;
+}
+
+.installIOS > div {
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  min-height: 48px;
+
+  padding: 11px 13px;
+
+  border:
+    1px solid
+    var(--line);
+
+  border-radius: 16px;
+
+  color: var(--text);
+  background: var(--surface-solid);
+
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.installStep {
+  width: 18px;
+  height: 18px;
+
+  display: grid;
+  place-items: center;
+
+  flex: none;
+
+  border-radius: 50%;
+
+  color: white;
+  background: #171715;
+
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.installWaiting {
+  margin-bottom: 12px;
+
+  padding: 13px;
+
+  border:
+    1px solid
+    var(--line);
+
+  border-radius: 16px;
+
+  color: var(--muted);
+  background: var(--surface-solid);
+
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+@media (max-width: 520px) {
+  .installOverlay {
+    align-items: end;
+
+    padding:
+      12px
+      12px
+      max(
+        12px,
+        env(safe-area-inset-bottom)
+      );
+  }
+
+  .installCard {
+    width: 100%;
+
+    padding:
+      28px
+      20px
+      20px;
+
+    border-radius: 30px;
+  }
+
+  .installIcon {
+    width: 72px;
+    height: 72px;
+
+    border-radius: 22px;
+
+    font-size: 24px;
+  }
+}
+
+/* DARK MODE */
+
+html[data-theme="dark"]
+.installOverlay {
+  background:
+    rgba(17, 17, 15, 0.95);
+}
+
+html[data-theme="dark"]
+.installCard {
+  border-color:
+    rgba(255, 255, 255, 0.08);
+
+  background:
+    rgba(25, 25, 22, 0.97);
+
+  box-shadow:
+    0 28px 80px
+    rgba(0, 0, 0, 0.40);
+}
+
+html[data-theme="dark"]
+.installClose {
+  color: var(--muted);
+
+  background:
+    rgba(255, 255, 255, 0.06);
+}
+
+html[data-theme="dark"]
+.installIcon {
+  color: #171715;
+  background: #f1f1eb;
+}
+
+html[data-theme="dark"]
+.installPrimary {
+  color: #171715;
+  background: #f1f1eb;
+}
+
+html[data-theme="dark"]
+.installIOS > div,
+html[data-theme="dark"]
+.installWaiting {
+  border-color:
+    rgba(255, 255, 255, 0.08);
+
+  background:
+    rgba(255, 255, 255, 0.04);
+}
+
+html[data-theme="dark"]
+.installStep {
+  color: #171715;
+  background: #f1f1eb;
+}
+
+.installIOS {
+  display: grid;
+  gap: 10px;
+
+  margin-bottom: 12px;
+}
+
+.installIOSHint {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  min-height: 58px;
+
+  padding: 12px 13px;
+
+  border:
+    1px solid
+    var(--line);
+
+  border-radius: 18px;
+
+  background:
+    var(--surface-solid);
+}
+
+.installIOSHint > div:last-child {
+  min-width: 0;
+
+  display: grid;
+  gap: 2px;
+}
+
+.installIOSHint strong {
+  color: var(--text);
+
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.installIOSHint span {
+  color: var(--muted);
+
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.installIOSIcon,
+.installIOSStep {
+  width: 36px;
+  height: 36px;
+
+  display: grid;
+  place-items: center;
+
+  flex: none;
+
+  border-radius: 12px;
+
+  color: var(--text);
+
+  background:
+    var(--soft);
+}
+
+.installIOSStep {
+  color: white;
+  background: #171715;
+
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.installIOSArrow {
+  color: var(--muted);
+
+  text-align: center;
+
+  font-size: 18px;
+  line-height: 1;
+}
+
+.installIOSNote {
+  display: block;
+
+  padding: 3px 6px 0;
+
+  color: var(--muted);
+
+  text-align: center;
+
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+html[data-theme="dark"]
+.installIOSHint {
+  border-color:
+    rgba(255, 255, 255, 0.08);
+
+  background:
+    rgba(255, 255, 255, 0.04);
+}
+
+html[data-theme="dark"]
+.installIOSIcon {
+  background:
+    rgba(255, 255, 255, 0.06);
+}
+
+html[data-theme="dark"]
+.installIOSStep {
+  color: #171715;
+  background: #f1f1eb;
+}
+
+/* =========================================================
+   AUX — iPHONE INSTALL GUIDE / iOS-LIKE
+   ========================================================= */
+
+.iosInstallGuide {
+  display: grid;
+  gap: 14px;
+
+  margin-bottom: 14px;
+}
+
+.iosGuideHeader {
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  padding: 2px 2px 4px;
+}
+
+.iosGuideBadge {
+  width: 38px;
+  height: 38px;
+
+  display: grid;
+  place-items: center;
+
+  flex: none;
+
+  border-radius: 12px;
+
+  color: #0a84ff;
+
+  background:
+    rgba(10, 132, 255, 0.10);
+}
+
+.iosGuideHeader > div:last-child {
+  min-width: 0;
+
+  display: grid;
+  gap: 2px;
+}
+
+.iosGuideHeader strong {
+  color: var(--text);
+
+  font-size: 13px;
+  font-weight: 720;
+  letter-spacing: -0.01em;
+}
+
+.iosGuideHeader span {
+  color: var(--muted);
+
+  font-size: 10px;
+}
+
+.iosGuideSteps {
+  position: relative;
+
+  display: grid;
+}
+
+.iosGuideStep {
+  position: relative;
+
+  min-height: 76px;
+
+  display: grid;
+
+  grid-template-columns:
+    30px 1fr 42px;
+
+  align-items: center;
+
+  gap: 11px;
+
+  padding: 12px 13px;
+
+  border:
+    1px solid
+    rgba(0, 0, 0, 0.07);
+
+  border-radius: 20px;
+
+  background:
+    rgba(255, 255, 255, 0.78);
+
+  box-shadow:
+    0 3px 14px
+    rgba(0, 0, 0, 0.025);
+}
+
+.iosStepNumber {
+  width: 28px;
+  height: 28px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  color: #fff;
+
+  background: #171715;
+
+  font-size: 11px;
+  font-weight: 760;
+}
+
+.iosStepCopy {
+  min-width: 0;
+
+  display: grid;
+  gap: 3px;
+}
+
+.iosStepCopy strong {
+  color: var(--text);
+
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.iosStepCopy span {
+  color: var(--muted);
+
+  font-size: 10px;
+  line-height: 1.38;
+}
+
+.iosSystemIcon {
+  width: 40px;
+  height: 40px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 13px;
+
+  color: #0a84ff;
+
+  background:
+    rgba(10, 132, 255, 0.09);
+}
+
+.iosPlusIcon {
+  font-size: 25px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.iosAppPreview {
+  color: white;
+  background: #171715;
+
+  font-family: var(--serif);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.iosGuideConnector {
+  width: 1px;
+  height: 10px;
+
+  margin:
+    2px 0
+    2px 27px;
+
+  background:
+    rgba(0, 0, 0, 0.12);
+}
+
+.iosGuideResult {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  padding:
+    11px 13px;
+
+  border-radius: 18px;
+
+  background:
+    rgba(0, 0, 0, 0.035);
+}
+
+.iosHomeIcon {
+  width: 46px;
+  height: 46px;
+
+  display: grid;
+  place-items: center;
+
+  flex: none;
+
+  border-radius: 13px;
+
+  color: white;
+  background: #171715;
+
+  font-family: var(--serif);
+  font-size: 13px;
+  font-weight: 700;
+
+  box-shadow:
+    0 6px 15px
+    rgba(0, 0, 0, 0.12);
+}
+
+.iosGuideResult > div:last-child {
+  min-width: 0;
+
+  display: grid;
+  gap: 2px;
+}
+
+.iosGuideResult strong {
+  color: var(--text);
+
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.iosGuideResult span {
+  color: var(--muted);
+
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+/* DARK */
+
+html[data-theme="dark"]
+.iosGuideBadge {
+  color: #68a9ff;
+
+  background:
+    rgba(58, 145, 255, 0.13);
+}
+
+html[data-theme="dark"]
+.iosGuideStep {
+  border-color:
+    rgba(255, 255, 255, 0.075);
+
+  background:
+    rgba(255, 255, 255, 0.045);
+
+  box-shadow: none;
+}
+
+html[data-theme="dark"]
+.iosStepNumber {
+  color: #171715;
+  background: #f1f1eb;
+}
+
+html[data-theme="dark"]
+.iosSystemIcon {
+  color: #68a9ff;
+
+  background:
+    rgba(58, 145, 255, 0.11);
+}
+
+html[data-theme="dark"]
+.iosAppPreview {
+  color: #171715;
+  background: #f1f1eb;
+}
+
+html[data-theme="dark"]
+.iosGuideConnector {
+  background:
+    rgba(255, 255, 255, 0.13);
+}
+
+html[data-theme="dark"]
+.iosGuideResult {
+  background:
+    rgba(255, 255, 255, 0.045);
+}
+
+html[data-theme="dark"]
+.iosHomeIcon {
+  color: #171715;
+  background: #f1f1eb;
+}
+
+/* =========================================================
+   AUX — DARK MODE / TABS + ICON BUTTONS
+   ========================================================= */
+
+html[data-theme="dark"] .tab.active {
+  background: var(--surface-solid);
+  color: var(--text);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.22);
+}
+
+html[data-theme="dark"] .iconBtn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+html[data-theme="dark"] .iconBtn.on {
+  color: var(--text);
+}
