@@ -3,13 +3,45 @@ import {
 } from "next/server";
 
 import {
+  resolveSpotify,
   resolveSpotifyAlbum,
+  resolveSpotifyArtist,
+  resolveSpotifyPlaylist,
+  resolveSpotifyShortUrl,
   spotifyAlbumId,
+  spotifyArtistId,
+  spotifyId,
+  spotifyPlaylistId,
 } from "@/lib/music/spotify";
 
 import {
-  resolveMusicUrl,
-} from "@/lib/music/resolver";
+  appleAlbumId,
+  appleArtistId,
+  appleId,
+  applePlaylistId,
+  resolveApple,
+  resolveAppleAlbum,
+  resolveAppleArtist,
+  resolveApplePlaylist,
+} from "@/lib/music/apple";
+
+import {
+  deezerAlbumId,
+  deezerArtistId,
+  deezerId,
+  deezerPlaylistId,
+  resolveDeezer,
+  resolveDeezerAlbum,
+  resolveDeezerArtist,
+  resolveDeezerPlaylist,
+  resolveDeezerShortUrl,
+} from "@/lib/music/deezer";
+
+import {
+  resolveYouTube,
+  resolveYouTubePlaylist,
+  youtubePlaylistId,
+} from "@/lib/music/youtube";
 
 function safeUrl(
   value: string
@@ -76,109 +108,272 @@ export async function POST(
       );
     }
 
-    const isSpotify =
-      [
-        "open.spotify.com",
-        "spotify.link",
-      ].includes(
-        parsed.hostname
-      );
+    const host =
+      parsed.hostname
+        .toLowerCase();
 
     /*
-     * =========================================
-     * SPOTIFY — ÁLBUM
-     * =========================================
-     *
-     * Link normal:
-     * open.spotify.com/album/...
-     *
-     * Aqui sabemos imediatamente que é álbum.
+     * SPOTIFY
      */
     if (
-      isSpotify &&
-      spotifyAlbumId(url)
+      host ===
+        "open.spotify.com" ||
+      host ===
+        "spotify.link"
     ) {
-      return NextResponse.json({
-        album:
-          await resolveSpotifyAlbum(
-            url
-          ),
-        kind: "album",
-      });
-    }
+      const resolvedUrl =
+        await resolveSpotifyShortUrl(
+          url
+        );
 
-    /*
-     * spotify.link não informa no próprio pathname se
-     * aponta para track ou album.
-     *
-     * Tentamos álbum primeiro. Se o redirect terminar em
-     * /track/, o resolver de álbum simplesmente não encontra
-     * album id e seguimos para o resolver normal de música.
-     */
-    if (
-      parsed.hostname ===
-      "spotify.link"
-    ) {
-      try {
-        const album =
-          await resolveSpotifyAlbum(
-            url
-          );
-
-        return NextResponse.json({
-          album,
-          kind: "album",
-        });
-      } catch (
-        albumError
+      if (
+        spotifyPlaylistId(
+          resolvedUrl
+        )
       ) {
-        try {
-          return NextResponse.json({
-            track:
-              await resolveMusicUrl(
-                url
-              ),
-            kind: "track",
-          });
-        } catch (
-          trackError
-        ) {
-          /*
-           * Se o primeiro resolver reconheceu que era um
-           * single, essa é a mensagem mais útil.
-           */
-          if (
-            albumError instanceof
-              Error &&
-            albumError.message
-              .toLowerCase()
-              .includes(
-                "single"
-              )
-          ) {
-            throw albumError;
-          }
+        return NextResponse.json({
+          playlist:
+            await resolveSpotifyPlaylist(
+              resolvedUrl
+            ),
+          kind:
+            "playlist",
+        });
+      }
 
-          throw trackError;
-        }
+      if (
+        spotifyArtistId(
+          resolvedUrl
+        )
+      ) {
+        return NextResponse.json({
+          artist:
+            await resolveSpotifyArtist(
+              resolvedUrl
+            ),
+          kind:
+            "artist",
+        });
+      }
+
+      if (
+        spotifyAlbumId(
+          resolvedUrl
+        )
+      ) {
+        return NextResponse.json({
+          album:
+            await resolveSpotifyAlbum(
+              resolvedUrl
+            ),
+          kind:
+            "album",
+        });
+      }
+
+      if (
+        spotifyId(
+          resolvedUrl
+        )
+      ) {
+        return NextResponse.json({
+          track:
+            await resolveSpotify(
+              resolvedUrl
+            ),
+          kind:
+            "track",
+        });
       }
     }
 
     /*
-     * =========================================
-     * TRACK / OUTROS PROVIDERS
-     * =========================================
-     *
-     * Mantém Apple Music, Deezer e links Spotify de
-     * música exatamente no fluxo que já funcionava.
+     * APPLE MUSIC
      */
-    return NextResponse.json({
-      track:
-        await resolveMusicUrl(
+    if (
+      host ===
+        "music.apple.com"
+    ) {
+      if (
+        applePlaylistId(
           url
-        ),
-      kind: "track",
-    });
+        )
+      ) {
+        return NextResponse.json({
+          playlist:
+            await resolveApplePlaylist(
+              url
+            ),
+          kind:
+            "playlist",
+        });
+      }
+
+      if (
+        appleArtistId(
+          url
+        )
+      ) {
+        return NextResponse.json({
+          artist:
+            await resolveAppleArtist(
+              url
+            ),
+          kind:
+            "artist",
+        });
+      }
+
+      if (
+        appleId(url)
+      ) {
+        return NextResponse.json({
+          track:
+            await resolveApple(
+              url
+            ),
+          kind:
+            "track",
+        });
+      }
+
+      if (
+        appleAlbumId(
+          url
+        )
+      ) {
+        return NextResponse.json({
+          album:
+            await resolveAppleAlbum(
+              url
+            ),
+          kind:
+            "album",
+        });
+      }
+    }
+
+    /*
+     * DEEZER
+     */
+    if (
+      host ===
+        "deezer.com" ||
+      host.endsWith(
+        ".deezer.com"
+      )
+    ) {
+      const resolvedUrl =
+        await resolveDeezerShortUrl(
+          url
+        );
+
+      if (
+        deezerPlaylistId(
+          resolvedUrl
+        )
+      ) {
+        return NextResponse.json({
+          playlist:
+            await resolveDeezerPlaylist(
+              resolvedUrl
+            ),
+          kind:
+            "playlist",
+        });
+      }
+
+      if (
+        deezerArtistId(
+          resolvedUrl
+        )
+      ) {
+        return NextResponse.json({
+          artist:
+            await resolveDeezerArtist(
+              resolvedUrl
+            ),
+          kind:
+            "artist",
+        });
+      }
+
+      if (
+        deezerAlbumId(
+          resolvedUrl
+        )
+      ) {
+        return NextResponse.json({
+          album:
+            await resolveDeezerAlbum(
+              resolvedUrl
+            ),
+          kind:
+            "album",
+        });
+      }
+
+      if (
+        deezerId(
+          resolvedUrl
+        )
+      ) {
+        return NextResponse.json({
+          track:
+            await resolveDeezer(
+              resolvedUrl
+            ),
+          kind:
+            "track",
+        });
+      }
+    }
+
+    /*
+     * YOUTUBE / YOUTUBE MUSIC
+     *
+     * Se houver `list`, priorizamos playlist.
+     * Um link watch?v=...&list=... pode representar uma música
+     * dentro de uma playlist; para compartilhar a playlist,
+     * o AUX considera o `list`.
+     */
+    if (
+      [
+        "youtube.com",
+        "www.youtube.com",
+        "music.youtube.com",
+        "m.youtube.com",
+        "youtu.be",
+      ].includes(host)
+    ) {
+      if (
+        youtubePlaylistId(
+          url
+        )
+      ) {
+        return NextResponse.json({
+          playlist:
+            await resolveYouTubePlaylist(
+              url
+            ),
+          kind:
+            "playlist",
+        });
+      }
+
+      return NextResponse.json({
+        track:
+          await resolveYouTube(
+            url
+          ),
+        kind:
+          "track",
+      });
+    }
+
+    throw new Error(
+      "Cole um link do Spotify, Apple Music, Deezer, YouTube ou YouTube Music."
+    );
   } catch (error) {
     return NextResponse.json(
       {

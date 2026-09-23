@@ -3,15 +3,17 @@
 import {
   Camera,
   ClipboardPaste,
-  Images,
-  Link2,
   Hash,
+  ImagePlus,
+  Images,
+  Mic2,
   Search,
   Star,
-  ImagePlus,
+  X,
 } from "lucide-react";
 import {
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import {
@@ -20,12 +22,19 @@ import {
 } from "next/navigation";
 
 import type {
+  Album,
+  Artist,
+  Playlist,
   Post,
   PostMedia,
+  PostSubjectKind,
   PostType,
   Profile,
   ResolvedAlbum,
+  ResolvedArtist,
+  ResolvedPlaylist,
   ResolvedTrack,
+  Track,
 } from "@/types";
 
 import MusicRecognition from "@/components/music/MusicRecognition";
@@ -42,25 +51,48 @@ type TagSuggestion = {
   count: number;
 };
 
-type SearchTarget =
-  | "track"
-  | "album";
+type UniversalSubject = {
+  kind: PostSubjectKind;
+  title: string;
+  subtitle: string;
+  artwork_url: string | null;
+  source_url: string;
+};
 
-function AlbumPreview({
-  album,
+function cleanTag(
+  value: string
+) {
+  return value
+    .trim()
+    .replace(/^#/, "")
+    .trim();
+}
+
+function subjectLabel(
+  kind: PostSubjectKind
+) {
+  if (kind === "album") {
+    return "álbum";
+  }
+
+  if (kind === "artist") {
+    return "artista";
+  }
+
+  if (kind === "playlist") {
+    return "playlist";
+  }
+
+  return "música";
+}
+
+function UniversalPreview({
+  subject,
   onClick,
 }: {
-  album: ResolvedAlbum;
+  subject: UniversalSubject;
   onClick?: () => void;
 }) {
-  const year =
-    album.release_date
-      ? album.release_date.slice(
-          0,
-          4
-        )
-      : null;
-
   const content = (
     <>
       <div
@@ -74,10 +106,14 @@ function AlbumPreview({
             "var(--soft)",
         }}
       >
-        {album.artwork_url ? (
+        {subject.artwork_url ? (
           <img
-            src={album.artwork_url}
-            alt={`Capa de ${album.title}`}
+            src={
+              subject.artwork_url
+            }
+            alt={`Capa de ${subject.title}`}
+            loading="lazy"
+            decoding="async"
             style={{
               width: "100%",
               height: "100%",
@@ -104,7 +140,7 @@ function AlbumPreview({
             fontSize: 14,
           }}
         >
-          {album.title}
+          {subject.title}
         </strong>
 
         <span
@@ -118,7 +154,7 @@ function AlbumPreview({
             whiteSpace: "nowrap",
           }}
         >
-          {album.artist}
+          {subject.subtitle}
         </span>
 
         <span
@@ -129,13 +165,9 @@ function AlbumPreview({
             fontSize: 10,
           }}
         >
-          álbum
-          {year
-            ? ` · ${year}`
-            : ""}
-          {album.total_tracks
-            ? ` · ${album.total_tracks} faixas`
-            : ""}
+          {subjectLabel(
+            subject.kind
+          )}
         </span>
       </div>
     </>
@@ -188,122 +220,300 @@ function AlbumPreview({
   );
 }
 
-function cleanTag(
-  value: string
-) {
-  return value
-    .trim()
-    .replace(/^#/, "")
-    .trim();
-}
-
 export default function MusicComposer() {
-  const params = useSearchParams();
-  const router = useRouter();
-
-  const initial = (params.get("mode") || "link") as
-    | "link"
-    | "search"
-    | "listen";
-
-  const [mode, setMode] = useState(initial);
-
-  const [track, setTrack] =
-    useState<ResolvedTrack | null>(null);
-
-  const [album, setAlbum] =
-    useState<ResolvedAlbum | null>(null);
+  const params =
+    useSearchParams();
+  const router =
+    useRouter();
 
   const [
-    searchTarget,
-    setSearchTarget,
-  ] = useState<SearchTarget>(
-    "track"
+    recognitionOpen,
+    setRecognitionOpen,
+  ] = useState(
+    params.get("mode") ===
+      "listen"
   );
 
+  const [track, setTrack] =
+    useState<ResolvedTrack | null>(
+      null
+    );
+
+  const [album, setAlbum] =
+    useState<ResolvedAlbum | null>(
+      null
+    );
+
+  const [artist, setArtist] =
+    useState<ResolvedArtist | null>(
+      null
+    );
+
+  const [
+    playlist,
+    setPlaylist,
+  ] =
+    useState<ResolvedPlaylist | null>(
+      null
+    );
+
   const [postType, setPostType] =
-    useState<PostType | null>(null);
+    useState<PostType | null>(
+      null
+    );
 
-  const [url, setUrl] = useState("");
-  const [query, setQuery] = useState("");
+  const [input, setInput] =
+    useState("");
 
-  const [results, setResults] = useState<
-    ResolvedTrack[]
-  >([]);
+  const [results, setResults] =
+    useState<ResolvedTrack[]>(
+      []
+    );
 
   const [
     albumResults,
     setAlbumResults,
-  ] = useState<ResolvedAlbum[]>(
-    []
-  );
+  ] =
+    useState<ResolvedAlbum[]>(
+      []
+    );
 
-  const [body, setBody] = useState("");
-  const [rating, setRating] = useState(4.5);
-  const [trend, setTrend] = useState("");
+  const [
+    artistResults,
+    setArtistResults,
+  ] =
+    useState<ResolvedArtist[]>(
+      []
+    );
+
+  const [
+    playlistResults,
+    setPlaylistResults,
+  ] =
+    useState<
+      ResolvedPlaylist[]
+    >([]);
+
+  const [body, setBody] =
+    useState("");
+
+  const [rating, setRating] =
+    useState(4.5);
+
+  const [trend, setTrend] =
+    useState("");
 
   const [
     tagSuggestions,
     setTagSuggestions,
-  ] = useState<TagSuggestion[]>(
-    []
-  );
+  ] = useState<
+    TagSuggestion[]
+  >([]);
 
   const [
     tagFocused,
     setTagFocused,
   ] = useState(false);
 
-  const [photos, setPhotos] = useState<File[]>(
-    []
-  );
+  const [photos, setPhotos] =
+    useState<File[]>([]);
 
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [busy, setBusy] =
+    useState(false);
 
-  const [published, setPublished] = useState<
-    string | null
-  >(null);
-
-  const [publishedPost, setPublishedPost] =
-    useState<Post | null>(null);
-
-  const [shareMessage, setShareMessage] =
+  const [error, setError] =
     useState("");
 
-  /*
-   * ========================================================
-   * LINK RECEBIDO POR SHARE TARGET
-   * ========================================================
-   */
-
-  useEffect(() => {
-    const shared = extractSharedUrl(
-      `${params.get("url") || ""} ${
-        params.get("text") || ""
-      }`
+  const [
+    published,
+    setPublished,
+  ] =
+    useState<string | null>(
+      null
     );
 
-    if (shared) {
-      setUrl(shared);
-      setMode("link");
+  const [
+    publishedPost,
+    setPublishedPost,
+  ] =
+    useState<Post | null>(
+      null
+    );
 
+  const [
+    shareMessage,
+    setShareMessage,
+  ] = useState("");
+
+  const subjectKind:
+    | PostSubjectKind
+    | null = track
+    ? "track"
+    : album
+      ? "album"
+      : artist
+        ? "artist"
+        : playlist
+          ? "playlist"
+          : null;
+
+  const selectedSubject =
+    useMemo<
+      UniversalSubject | null
+    >(() => {
+      if (track) {
+        return {
+          kind: "track",
+          title: track.title,
+          subtitle:
+            track.artist,
+          artwork_url:
+            track.artwork_url,
+          source_url:
+            track.source_url,
+        };
+      }
+
+      if (album) {
+        return {
+          kind: "album",
+          title: album.title,
+          subtitle:
+            album.artist,
+          artwork_url:
+            album.artwork_url,
+          source_url:
+            album.source_url,
+        };
+      }
+
+      if (artist) {
+        return {
+          kind: "artist",
+          title: artist.name,
+          subtitle: "artista",
+          artwork_url:
+            artist.artwork_url,
+          source_url:
+            artist.source_url,
+        };
+      }
+
+      if (playlist) {
+        return {
+          kind: "playlist",
+          title:
+            playlist.title,
+          subtitle:
+            playlist.owner_name ||
+            "playlist",
+          artwork_url:
+            playlist.artwork_url,
+          source_url:
+            playlist.source_url,
+        };
+      }
+
+      return null;
+    }, [
+      track,
+      album,
+      artist,
+      playlist,
+    ]);
+
+  function clearResults() {
+    setResults([]);
+    setAlbumResults([]);
+    setArtistResults([]);
+    setPlaylistResults([]);
+  }
+
+  function clearSubject() {
+    setTrack(null);
+    setAlbum(null);
+    setArtist(null);
+    setPlaylist(null);
+    setPostType(null);
+    setPhotos([]);
+    setError("");
+  }
+
+  function chooseTrack(
+    value: ResolvedTrack
+  ) {
+    clearResults();
+    setTrack(value);
+    setAlbum(null);
+    setArtist(null);
+    setPlaylist(null);
+    setPostType(null);
+    setRecognitionOpen(false);
+    setError("");
+  }
+
+  function chooseAlbum(
+    value: ResolvedAlbum
+  ) {
+    clearResults();
+    setTrack(null);
+    setAlbum(value);
+    setArtist(null);
+    setPlaylist(null);
+    setPostType(null);
+    setRecognitionOpen(false);
+    setError("");
+  }
+
+  function chooseArtist(
+    value: ResolvedArtist
+  ) {
+    clearResults();
+    setTrack(null);
+    setAlbum(null);
+    setArtist(value);
+    setPlaylist(null);
+    setPostType(null);
+    setRecognitionOpen(false);
+    setError("");
+  }
+
+  function choosePlaylist(
+    value: ResolvedPlaylist
+  ) {
+    clearResults();
+    setTrack(null);
+    setAlbum(null);
+    setArtist(null);
+    setPlaylist(value);
+    setPostType(null);
+    setRecognitionOpen(false);
+    setError("");
+  }
+
+  /*
+   * Link recebido pelo Web Share Target.
+   */
+  useEffect(() => {
+    const shared =
+      extractSharedUrl(
+        `${params.get("url") || ""} ${
+          params.get("text") || ""
+        }`
+      );
+
+    if (shared) {
+      setInput(shared);
       void resolve(shared);
     }
+
     // Executar somente na montagem.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /*
-   * ========================================================
-   * TAGS DA COMUNIDADE
-   * ========================================================
-   *
-   * Carrega tags já usadas em publicações públicas.
-   * Isso evita criar "late night", "Late Night" e
-   * "#late night" como ideias visualmente separadas.
+   * Tags da comunidade.
    */
-
   useEffect(() => {
     if (!postType) {
       return;
@@ -322,7 +532,8 @@ export default function MusicComposer() {
 
       const {
         data,
-        error: tagsError,
+        error:
+          tagsError,
       } = await supabase
         .from("posts")
         .select(
@@ -340,7 +551,8 @@ export default function MusicComposer() {
         .order(
           "created_at",
           {
-            ascending: false,
+            ascending:
+              false,
           }
         )
         .limit(300);
@@ -362,7 +574,8 @@ export default function MusicComposer() {
         (row) => {
           const label =
             cleanTag(
-              row.trend ?? ""
+              row.trend ??
+                ""
             );
 
           if (!label) {
@@ -390,7 +603,7 @@ export default function MusicComposer() {
         [...map.values()].sort(
           (a, b) =>
             b.count -
-            a.count ||
+              a.count ||
             a.label.localeCompare(
               b.label
             )
@@ -419,17 +632,21 @@ export default function MusicComposer() {
 
         return item.label
           .toLowerCase()
-          .includes(tagTerm);
+          .includes(
+            tagTerm
+          );
       })
       .slice(0, 6);
 
-  /*
-   * ========================================================
-   * RESOLVER LINK DE MÚSICA / ÁLBUM
-   * ========================================================
-   */
+  function looksLikeUrl(
+    value: string
+  ) {
+    return /^https?:\/\//i.test(
+      value.trim()
+    );
+  }
 
-  async function pasteMusicLink() {
+  async function pasteFromClipboard() {
     setError("");
 
     try {
@@ -449,143 +666,176 @@ export default function MusicComposer() {
             .readText()
         ).trim();
 
+      if (!text) {
+        throw new Error(
+          "Não encontrei nada copiado."
+        );
+      }
+
       const shared =
         extractSharedUrl(
           text
         );
 
-      if (!shared) {
-        throw new Error(
-          "Não encontrei um link de música no que você copiou."
-        );
-      }
+      const value =
+        shared || text;
 
-      setUrl(shared);
+      setInput(value);
 
-      await resolve(
-        shared
-      );
-    } catch (error) {
       if (
-        error instanceof
+        looksLikeUrl(value)
+      ) {
+        await resolve(value);
+      } else {
+        await search(value);
+      }
+    } catch (caught) {
+      if (
+        caught instanceof
           DOMException &&
         (
-          error.name ===
+          caught.name ===
             "NotAllowedError" ||
-          error.name ===
+          caught.name ===
             "SecurityError"
         )
       ) {
         setError(
-          "Não consegui ler o link copiado. Cole no campo abaixo."
+          "Não consegui ler o que foi copiado. Cole no campo."
         );
-
         return;
       }
 
       setError(
-        error instanceof Error
-          ? error.message
-          : "Não consegui usar o link copiado."
+        caught instanceof Error
+          ? caught.message
+          : "Não consegui usar o conteúdo copiado."
       );
     }
   }
 
-  async function resolve(value = url) {
-    setBusy(true);
-    setError("");
+  async function submitInput() {
+    const clean =
+      input.trim();
 
-    try {
-      const response = await fetch(
-        "/api/music/resolve",
-        {
-          method: "POST",
+    if (clean.length < 2) {
+      return;
+    }
 
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify({
-            url: value,
-          }),
-        }
+    const shared =
+      extractSharedUrl(
+        clean
       );
 
-      const json = await response.json();
+    if (
+      shared ||
+      looksLikeUrl(clean)
+    ) {
+      await resolve(
+        shared || clean
+      );
+      return;
+    }
+
+    await search(clean);
+  }
+
+  async function resolve(
+    value: string
+  ) {
+    setBusy(true);
+    setError("");
+    clearResults();
+
+    try {
+      const response =
+        await fetch(
+          "/api/music/resolve",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body:
+              JSON.stringify({
+                url: value,
+              }),
+          }
+        );
+
+      const json =
+        await response.json();
 
       if (!response.ok) {
-        throw new Error(json.error);
+        throw new Error(
+          json.error
+        );
       }
 
       if (
-        json.kind === "album" &&
-        json.album
+        json.kind ===
+          "track" &&
+        json.track
       ) {
-        setAlbum(
-          json.album
+        chooseTrack(
+          json.track
         );
-
-        setTrack(
-          null
-        );
-
-        /*
-         * Álbum entra direto em Review.
-         * Memory continua exclusiva de música.
-         */
-        setPostType(
-          "review"
-        );
-
         return;
       }
 
       if (
-        json.kind === "track" &&
-        json.track
+        json.kind ===
+          "album" &&
+        json.album
       ) {
-        setTrack(
-          json.track
+        chooseAlbum(
+          json.album
         );
+        return;
+      }
 
-        setAlbum(
-          null
+      if (
+        json.kind ===
+          "artist" &&
+        json.artist
+      ) {
+        chooseArtist(
+          json.artist
         );
+        return;
+      }
 
-        /*
-         * Música mantém o fluxo existente:
-         * depois a pessoa escolhe Review ou Memory.
-         */
-        setPostType(
-          null
+      if (
+        json.kind ===
+          "playlist" &&
+        json.playlist
+      ) {
+        choosePlaylist(
+          json.playlist
         );
-
         return;
       }
 
       throw new Error(
-        "Não consegui identificar se esse link é de uma música ou álbum."
+        "Não consegui identificar esse conteúdo."
       );
-    } catch (error) {
+    } catch (caught) {
       setError(
-        error instanceof Error
-          ? error.message
-          : "não encontrei essa música automaticamente."
+        caught instanceof Error
+          ? caught.message
+          : "Não consegui resolver esse link."
       );
     } finally {
       setBusy(false);
     }
   }
 
-  /*
-   * ========================================================
-   * BUSCAR MÚSICA
-   * ========================================================
-   */
-
-  async function search() {
+  async function search(
+    value = input
+  ) {
     const clean =
-      query.trim();
+      value.trim();
 
     if (clean.length < 2) {
       return;
@@ -593,42 +843,24 @@ export default function MusicComposer() {
 
     setBusy(true);
     setError("");
+    clearResults();
 
     try {
-      const suffix =
-        searchTarget === "album"
-          ? "&type=album"
-          : "";
-
-      const response = await fetch(
-        `/api/music/search?q=${encodeURIComponent(
-          clean
-        )}${suffix}`
-      );
-
-      const json = await response.json();
-
-      if (!response.ok) {
-        throw new Error(json.error);
-      }
-
-      if (
-        searchTarget === "album"
-      ) {
-        setResults([]);
-
-        setAlbumResults(
-          Array.isArray(
-            json.albums
-          )
-            ? json.albums
-            : []
+      const response =
+        await fetch(
+          `/api/music/search?q=${encodeURIComponent(
+            clean
+          )}`
         );
 
-        return;
-      }
+      const json =
+        await response.json();
 
-      setAlbumResults([]);
+      if (!response.ok) {
+        throw new Error(
+          json.error
+        );
+      }
 
       setResults(
         Array.isArray(
@@ -637,10 +869,34 @@ export default function MusicComposer() {
           ? json.tracks
           : []
       );
-    } catch (error) {
+
+      setAlbumResults(
+        Array.isArray(
+          json.albums
+        )
+          ? json.albums
+          : []
+      );
+
+      setArtistResults(
+        Array.isArray(
+          json.artists
+        )
+          ? json.artists
+          : []
+      );
+
+      setPlaylistResults(
+        Array.isArray(
+          json.playlists
+        )
+          ? json.playlists
+          : []
+      );
+    } catch (caught) {
       setError(
-        error instanceof Error
-          ? error.message
+        caught instanceof Error
+          ? caught.message
           : "busca indisponível."
       );
     } finally {
@@ -648,62 +904,612 @@ export default function MusicComposer() {
     }
   }
 
-  /*
-   * ========================================================
-   * FOTOS DA MEMORY
-   * ========================================================
-   */
+  function chooseFiles(
+    list: FileList | null
+  ) {
+    if (!list) {
+      return;
+    }
 
-  function chooseFiles(list: FileList | null) {
-    if (!list) return;
+    const acceptedFiles =
+      Array.from(list)
+        .filter(
+          (file) =>
+            file.type.startsWith(
+              "image/"
+            ) &&
+            file.size <=
+              10_000_000
+        )
+        .slice(0, 6);
 
-    const acceptedFiles = Array.from(list)
-      .filter(
-        (file) =>
-          file.type.startsWith("image/") &&
-          file.size <= 10_000_000
-      )
-      .slice(0, 6);
-
-    setPhotos((current) =>
-      [...current, ...acceptedFiles].slice(0, 6)
+    setPhotos(
+      (current) =>
+        [
+          ...current,
+          ...acceptedFiles,
+        ].slice(0, 6)
     );
   }
 
   /*
-   * ========================================================
-   * PUBLICAR REVIEW / MEMORY
-   * ========================================================
+   * Helpers de persistência.
    */
+  async function persistTrack(
+    supabase: ReturnType<
+      typeof createClient
+    >,
+    value: ResolvedTrack
+  ) {
+    if (
+      value.provider_track_id
+    ) {
+      const {
+        data: existing,
+        error: findError,
+      } = await supabase
+        .from("tracks")
+        .select("id")
+        .eq(
+          "provider",
+          value.provider
+        )
+        .eq(
+          "provider_track_id",
+          value.provider_track_id
+        )
+        .maybeSingle();
 
-  async function publish() {
-    const hasSubject =
-      Boolean(track || album);
+      if (findError) {
+        throw new Error(
+          `tracks: ${findError.message}`
+        );
+      }
+
+      if (existing) {
+        return existing.id as string;
+      }
+    }
+
+    const {
+      data,
+      error:
+        insertError,
+    } = await supabase
+      .from("tracks")
+      .insert({
+        provider:
+          value.provider,
+        provider_track_id:
+          value.provider_track_id,
+        title:
+          value.title,
+        artist:
+          value.artist,
+        album:
+          value.album,
+        artwork_url:
+          value.artwork_url,
+        source_url:
+          value.source_url,
+        spotify_url:
+          value.spotify_url ??
+          null,
+        apple_music_url:
+          value.apple_music_url ??
+          null,
+        deezer_url:
+          value.deezer_url ??
+          null,
+        duration_ms:
+          value.duration_ms ??
+          null,
+      })
+      .select("id")
+      .single();
 
     if (
-      !hasSubject ||
+      insertError?.code ===
+        "23505" &&
+      value.provider_track_id
+    ) {
+      const {
+        data: raced,
+        error: raceError,
+      } = await supabase
+        .from("tracks")
+        .select("id")
+        .eq(
+          "provider",
+          value.provider
+        )
+        .eq(
+          "provider_track_id",
+          value.provider_track_id
+        )
+        .single();
+
+      if (raceError) {
+        throw new Error(
+          `tracks: ${raceError.message}`
+        );
+      }
+
+      return raced.id as string;
+    }
+
+    if (insertError) {
+      throw new Error(
+        `tracks: ${insertError.message}`
+      );
+    }
+
+    return data.id as string;
+  }
+
+  async function persistAlbum(
+    supabase: ReturnType<
+      typeof createClient
+    >,
+    value: ResolvedAlbum
+  ) {
+    if (
+      value.provider_album_id
+    ) {
+      const {
+        data: existing,
+        error: findError,
+      } = await supabase
+        .from("albums")
+        .select("id")
+        .eq(
+          "provider",
+          value.provider
+        )
+        .eq(
+          "provider_album_id",
+          value.provider_album_id
+        )
+        .maybeSingle();
+
+      if (findError) {
+        throw new Error(
+          `albums: ${findError.message}`
+        );
+      }
+
+      if (existing) {
+        return existing.id as string;
+      }
+    }
+
+    const {
+      data,
+      error:
+        insertError,
+    } = await supabase
+      .from("albums")
+      .insert({
+        provider:
+          value.provider,
+        provider_album_id:
+          value.provider_album_id,
+        title:
+          value.title,
+        artist:
+          value.artist,
+        artwork_url:
+          value.artwork_url,
+        source_url:
+          value.source_url,
+        spotify_url:
+          value.spotify_url ??
+          null,
+        apple_music_url:
+          value.apple_music_url ??
+          null,
+        deezer_url:
+          value.deezer_url ??
+          null,
+        release_date:
+          value.release_date ??
+          null,
+        total_tracks:
+          value.total_tracks ??
+          null,
+      })
+      .select("id")
+      .single();
+
+    if (
+      insertError?.code ===
+        "23505" &&
+      value.provider_album_id
+    ) {
+      const {
+        data: raced,
+        error: raceError,
+      } = await supabase
+        .from("albums")
+        .select("id")
+        .eq(
+          "provider",
+          value.provider
+        )
+        .eq(
+          "provider_album_id",
+          value.provider_album_id
+        )
+        .single();
+
+      if (raceError) {
+        throw new Error(
+          `albums: ${raceError.message}`
+        );
+      }
+
+      return raced.id as string;
+    }
+
+    if (insertError) {
+      throw new Error(
+        `albums: ${insertError.message}`
+      );
+    }
+
+    return data.id as string;
+  }
+
+  async function persistArtist(
+    supabase: ReturnType<
+      typeof createClient
+    >,
+    value: ResolvedArtist
+  ) {
+    if (
+      value.provider_artist_id
+    ) {
+      const {
+        data: existing,
+        error: findError,
+      } = await supabase
+        .from("artists")
+        .select("id")
+        .eq(
+          "provider",
+          value.provider
+        )
+        .eq(
+          "provider_artist_id",
+          value.provider_artist_id
+        )
+        .maybeSingle();
+
+      if (findError) {
+        throw new Error(
+          `artists: ${findError.message}`
+        );
+      }
+
+      if (existing) {
+        return existing.id as string;
+      }
+    }
+
+    const {
+      data,
+      error:
+        insertError,
+    } = await supabase
+      .from("artists")
+      .insert({
+        provider:
+          value.provider,
+        provider_artist_id:
+          value.provider_artist_id,
+        name:
+          value.name,
+        artwork_url:
+          value.artwork_url,
+        source_url:
+          value.source_url,
+        spotify_url:
+          value.spotify_url ??
+          null,
+        apple_music_url:
+          value.apple_music_url ??
+          null,
+        deezer_url:
+          value.deezer_url ??
+          null,
+      })
+      .select("id")
+      .single();
+
+    if (
+      insertError?.code ===
+        "23505" &&
+      value.provider_artist_id
+    ) {
+      const {
+        data: raced,
+        error: raceError,
+      } = await supabase
+        .from("artists")
+        .select("id")
+        .eq(
+          "provider",
+          value.provider
+        )
+        .eq(
+          "provider_artist_id",
+          value.provider_artist_id
+        )
+        .single();
+
+      if (raceError) {
+        throw new Error(
+          `artists: ${raceError.message}`
+        );
+      }
+
+      return raced.id as string;
+    }
+
+    if (insertError) {
+      throw new Error(
+        `artists: ${insertError.message}`
+      );
+    }
+
+    return data.id as string;
+  }
+
+  async function persistPlaylist(
+    supabase: ReturnType<
+      typeof createClient
+    >,
+    value: ResolvedPlaylist
+  ) {
+    if (
+      value.provider_playlist_id
+    ) {
+      const {
+        data: existing,
+        error: findError,
+      } = await supabase
+        .from("playlists")
+        .select("id")
+        .eq(
+          "provider",
+          value.provider
+        )
+        .eq(
+          "provider_playlist_id",
+          value.provider_playlist_id
+        )
+        .maybeSingle();
+
+      if (findError) {
+        throw new Error(
+          `playlists: ${findError.message}`
+        );
+      }
+
+      if (existing) {
+        return existing.id as string;
+      }
+    }
+
+    const {
+      data,
+      error:
+        insertError,
+    } = await supabase
+      .from("playlists")
+      .insert({
+        provider:
+          value.provider,
+        provider_playlist_id:
+          value.provider_playlist_id,
+        title:
+          value.title,
+        owner_name:
+          value.owner_name ??
+          null,
+        description:
+          value.description ??
+          null,
+        artwork_url:
+          value.artwork_url,
+        source_url:
+          value.source_url,
+        spotify_url:
+          value.spotify_url ??
+          null,
+        apple_music_url:
+          value.apple_music_url ??
+          null,
+        deezer_url:
+          value.deezer_url ??
+          null,
+        total_tracks:
+          value.total_tracks ??
+          null,
+      })
+      .select("id")
+      .single();
+
+    if (
+      insertError?.code ===
+        "23505" &&
+      value.provider_playlist_id
+    ) {
+      const {
+        data: raced,
+        error: raceError,
+      } = await supabase
+        .from("playlists")
+        .select("id")
+        .eq(
+          "provider",
+          value.provider
+        )
+        .eq(
+          "provider_playlist_id",
+          value.provider_playlist_id
+        )
+        .single();
+
+      if (raceError) {
+        throw new Error(
+          `playlists: ${raceError.message}`
+        );
+      }
+
+      return raced.id as string;
+    }
+
+    if (insertError) {
+      throw new Error(
+        `playlists: ${insertError.message}`
+      );
+    }
+
+    return data.id as string;
+  }
+
+  function displayTrack(
+    id: string
+  ): Track {
+    if (track) {
+      return {
+        id,
+        provider:
+          track.provider,
+        provider_track_id:
+          track.provider_track_id,
+        title:
+          track.title,
+        artist:
+          track.artist,
+        album:
+          track.album,
+        artwork_url:
+          track.artwork_url,
+        source_url:
+          track.source_url,
+        spotify_url:
+          track.spotify_url,
+        apple_music_url:
+          track.apple_music_url,
+        deezer_url:
+          track.deezer_url,
+        duration_ms:
+          track.duration_ms,
+      };
+    }
+
+    if (album) {
+      return {
+        id,
+        provider:
+          album.provider,
+        provider_track_id:
+          null,
+        title:
+          album.title,
+        artist:
+          album.artist,
+        album:
+          album.title,
+        artwork_url:
+          album.artwork_url,
+        source_url:
+          album.source_url,
+        spotify_url:
+          album.spotify_url,
+        apple_music_url:
+          album.apple_music_url,
+        deezer_url:
+          album.deezer_url,
+        duration_ms:
+          null,
+      };
+    }
+
+    if (artist) {
+      return {
+        id,
+        provider:
+          artist.provider,
+        provider_track_id:
+          null,
+        title:
+          artist.name,
+        artist:
+          artist.name,
+        album:
+          null,
+        artwork_url:
+          artist.artwork_url,
+        source_url:
+          artist.source_url,
+        spotify_url:
+          artist.spotify_url,
+        apple_music_url:
+          artist.apple_music_url,
+        deezer_url:
+          artist.deezer_url,
+        duration_ms:
+          null,
+      };
+    }
+
+    if (playlist) {
+      return {
+        id,
+        provider:
+          playlist.provider,
+        provider_track_id:
+          null,
+        title:
+          playlist.title,
+        artist:
+          playlist.owner_name ||
+          "Playlist",
+        album:
+          null,
+        artwork_url:
+          playlist.artwork_url,
+        source_url:
+          playlist.source_url,
+        spotify_url:
+          playlist.spotify_url,
+        apple_music_url:
+          playlist.apple_music_url,
+        deezer_url:
+          playlist.deezer_url,
+        duration_ms:
+          null,
+      };
+    }
+
+    throw new Error(
+      "Assunto da publicação ausente."
+    );
+  }
+
+  async function publish() {
+    if (
+      !selectedSubject ||
+      !subjectKind ||
       !postType ||
       !body.trim()
     ) {
       setError(
         "Falta escrever o que ficou para você."
       );
-
-      return;
-    }
-
-    /*
-     * Álbum só pode gerar Review.
-     * A constraint do banco também protege essa regra.
-     */
-    if (
-      album &&
-      postType !== "review"
-    ) {
-      setError(
-        "Álbuns podem ser publicados como Review."
-      );
-
       return;
     }
 
@@ -712,11 +1518,19 @@ export default function MusicComposer() {
       !rating
     ) {
       setError(
-        album
-          ? "Dê uma nota para o álbum."
-          : "Dê uma nota para a música."
+        `Dê uma nota para ${
+          subjectKind ===
+          "artist"
+            ? "o artista"
+            : subjectKind ===
+                "playlist"
+              ? "a playlist"
+              : subjectKind ===
+                  "album"
+                ? "o álbum"
+                : "a música"
+        }.`
       );
-
       return;
     }
 
@@ -727,7 +1541,6 @@ export default function MusicComposer() {
       setError(
         "Adicione pelo menos uma fotografia."
       );
-
       return;
     }
 
@@ -736,12 +1549,6 @@ export default function MusicComposer() {
     setShareMessage("");
 
     try {
-      /*
-       * ----------------------------
-       * DEMO MODE
-       * ----------------------------
-       */
-
       if (IS_DEMO) {
         const id =
           `demo-${Date.now()}`;
@@ -750,8 +1557,11 @@ export default function MusicComposer() {
           "aux-demo-last",
           JSON.stringify({
             id,
+            subjectKind,
             track,
             album,
+            artist,
+            playlist,
             postType,
             body,
             rating,
@@ -765,15 +1575,8 @@ export default function MusicComposer() {
         );
 
         setPublished(id);
-
         return;
       }
-
-      /*
-       * ----------------------------
-       * USUÁRIO
-       * ----------------------------
-       */
 
       const supabase =
         createClient();
@@ -781,7 +1584,8 @@ export default function MusicComposer() {
       const {
         data: { user },
       } =
-        await supabase.auth.getUser();
+        await supabase.auth
+          .getUser();
 
       if (!user) {
         router.push(
@@ -790,482 +1594,96 @@ export default function MusicComposer() {
               location.search
           )}`
         );
-
         return;
       }
 
       let trackId:
         | string
         | null = null;
-
       let albumId:
         | string
         | null = null;
-
-      /*
-       * ----------------------------
-       * ALBUM
-       * ----------------------------
-       */
-
-      if (album) {
-        if (
-          album.provider_album_id
-        ) {
-          const {
-            data:
-              existingAlbum,
-            error:
-              findAlbumError,
-          } =
-            await supabase
-              .from("albums")
-              .select("id")
-              .eq(
-                "provider",
-                album.provider
-              )
-              .eq(
-                "provider_album_id",
-                album.provider_album_id
-              )
-              .maybeSingle();
-
-          if (
-            findAlbumError
-          ) {
-            throw new Error(
-              `albums: ${findAlbumError.message}`
-            );
-          }
-
-          if (
-            existingAlbum
-          ) {
-            albumId =
-              existingAlbum.id;
-          } else {
-            const {
-              data:
-                newAlbum,
-              error:
-                insertAlbumError,
-            } =
-              await supabase
-                .from(
-                  "albums"
-                )
-                .insert({
-                  provider:
-                    album.provider,
-
-                  provider_album_id:
-                    album.provider_album_id,
-
-                  title:
-                    album.title,
-
-                  artist:
-                    album.artist,
-
-                  artwork_url:
-                    album.artwork_url,
-
-                  source_url:
-                    album.source_url,
-
-                  spotify_url:
-                    album.spotify_url ??
-                    null,
-
-                  apple_music_url:
-                    album.apple_music_url ??
-                    null,
-
-                  deezer_url:
-                    album.deezer_url ??
-                    null,
-
-                  release_date:
-                    album.release_date ??
-                    null,
-
-                  total_tracks:
-                    album.total_tracks ??
-                    null,
-                })
-                .select(
-                  "id"
-                )
-                .single();
-
-            if (
-              insertAlbumError &&
-              insertAlbumError.code ===
-                "23505"
-            ) {
-              const {
-                data:
-                  racedAlbum,
-                error:
-                  racedAlbumError,
-              } =
-                await supabase
-                  .from(
-                    "albums"
-                  )
-                  .select(
-                    "id"
-                  )
-                  .eq(
-                    "provider",
-                    album.provider
-                  )
-                  .eq(
-                    "provider_album_id",
-                    album.provider_album_id
-                  )
-                  .single();
-
-              if (
-                racedAlbumError
-              ) {
-                throw new Error(
-                  `albums: ${racedAlbumError.message}`
-                );
-              }
-
-              albumId =
-                racedAlbum.id;
-            } else if (
-              insertAlbumError
-            ) {
-              throw new Error(
-                `albums: ${insertAlbumError.message}`
-              );
-            } else {
-              albumId =
-                newAlbum.id;
-            }
-          }
-        } else {
-          /*
-           * Fallback para providers que eventualmente
-           * não devolverem um id externo.
-           */
-          const {
-            data:
-              newAlbum,
-            error:
-              albumError,
-          } =
-            await supabase
-              .from("albums")
-              .insert({
-                provider:
-                  album.provider,
-
-                provider_album_id:
-                  null,
-
-                title:
-                  album.title,
-
-                artist:
-                  album.artist,
-
-                artwork_url:
-                  album.artwork_url,
-
-                source_url:
-                  album.source_url,
-
-                spotify_url:
-                  album.spotify_url ??
-                  null,
-
-                apple_music_url:
-                  album.apple_music_url ??
-                  null,
-
-                deezer_url:
-                  album.deezer_url ??
-                  null,
-
-                release_date:
-                  album.release_date ??
-                  null,
-
-                total_tracks:
-                  album.total_tracks ??
-                  null,
-              })
-              .select("id")
-              .single();
-
-          if (albumError) {
-            throw new Error(
-              `albums: ${albumError.message}`
-            );
-          }
-
-          albumId =
-            newAlbum.id;
-        }
-      }
-
-      /*
-       * ----------------------------
-       * TRACK
-       * ----------------------------
-       */
+      let artistId:
+        | string
+        | null = null;
+      let playlistId:
+        | string
+        | null = null;
 
       if (track) {
-        /*
-         * A mesma música pode aparecer em quantas publicações
-         * forem necessárias. `tracks` guarda uma única ficha da
-         * música; cada Review/Memory cria um novo post apontando
-         * para essa ficha.
-         */
-
-        if (
-          track.provider_track_id
-        ) {
-          const {
-            data:
-              existingTrack,
-            error:
-              findTrackError,
-          } =
-            await supabase
-              .from("tracks")
-              .select("id")
-              .eq(
-                "provider",
-                track.provider
-              )
-              .eq(
-                "provider_track_id",
-                track.provider_track_id
-              )
-              .maybeSingle();
-
-          if (
-            findTrackError
-          ) {
-            throw new Error(
-              `tracks: ${findTrackError.message}`
-            );
-          }
-
-          if (
-            existingTrack
-          ) {
-            trackId =
-              existingTrack.id;
-          } else {
-            const {
-              data:
-                newTrack,
-              error:
-                insertTrackError,
-            } =
-              await supabase
-                .from(
-                  "tracks"
-                )
-                .insert({
-                  provider:
-                    track.provider,
-
-                  provider_track_id:
-                    track.provider_track_id,
-
-                  title:
-                    track.title,
-
-                  artist:
-                    track.artist,
-
-                  album:
-                    track.album,
-
-                  artwork_url:
-                    track.artwork_url,
-
-                  source_url:
-                    track.source_url,
-
-                  spotify_url:
-                    track.spotify_url ??
-                    null,
-
-                  apple_music_url:
-                    track.apple_music_url ??
-                    null,
-
-                  deezer_url:
-                    track.deezer_url ??
-                    null,
-
-                  duration_ms:
-                    track.duration_ms ??
-                    null,
-                })
-                .select(
-                  "id"
-                )
-                .single();
-
-            if (
-              insertTrackError &&
-              insertTrackError.code ===
-                "23505"
-            ) {
-              const {
-                data:
-                  racedTrack,
-                error:
-                  racedTrackError,
-              } =
-                await supabase
-                  .from(
-                    "tracks"
-                  )
-                  .select(
-                    "id"
-                  )
-                  .eq(
-                    "provider",
-                    track.provider
-                  )
-                  .eq(
-                    "provider_track_id",
-                    track.provider_track_id
-                  )
-                  .single();
-
-              if (
-                racedTrackError
-              ) {
-                throw new Error(
-                  `tracks: ${racedTrackError.message}`
-                );
-              }
-
-              trackId =
-                racedTrack.id;
-            } else if (
-              insertTrackError
-            ) {
-              throw new Error(
-                `tracks: ${insertTrackError.message}`
-              );
-            } else {
-              trackId =
-                newTrack.id;
-            }
-          }
-        } else {
-          const {
-            data:
-              newTrack,
-            error:
-              trackError,
-          } =
-            await supabase
-              .from("tracks")
-              .insert({
-                provider:
-                  track.provider,
-
-                title:
-                  track.title,
-
-                artist:
-                  track.artist,
-
-                album:
-                  track.album,
-
-                artwork_url:
-                  track.artwork_url,
-
-                source_url:
-                  track.source_url,
-              })
-              .select("id")
-              .single();
-
-          if (trackError) {
-            throw new Error(
-              `tracks: ${trackError.message}`
-            );
-          }
-
-          trackId =
-            newTrack.id;
-        }
+        trackId =
+          await persistTrack(
+            supabase,
+            track
+          );
       }
 
-      /*
-       * ----------------------------
-       * POST
-       * ----------------------------
-       */
+      if (album) {
+        albumId =
+          await persistAlbum(
+            supabase,
+            album
+          );
+      }
+
+      if (artist) {
+        artistId =
+          await persistArtist(
+            supabase,
+            artist
+          );
+      }
+
+      if (playlist) {
+        playlistId =
+          await persistPlaylist(
+            supabase,
+            playlist
+          );
+      }
 
       const {
         data: post,
         error: postError,
-      } =
-        await supabase
-          .from("posts")
-          .insert({
-            user_id:
-              user.id,
-
-            track_id:
-              trackId,
-
-            album_id:
-              albumId,
-
-            type:
-              postType,
-
-            body:
-              body.trim(),
-
-            rating:
-              postType ===
-              "review"
-                ? rating
-                : null,
-
-            trend:
-              cleanTag(
-                trend
-              ) || null,
-
-            visibility:
-              "public",
-          })
-          .select(
-            "id,created_at"
-          )
-          .single();
+      } = await supabase
+        .from("posts")
+        .insert({
+          user_id:
+            user.id,
+          track_id:
+            trackId,
+          album_id:
+            albumId,
+          artist_id:
+            artistId,
+          playlist_id:
+            playlistId,
+          type:
+            postType,
+          body:
+            body.trim(),
+          rating:
+            postType ===
+            "review"
+              ? rating
+              : null,
+          trend:
+            cleanTag(
+              trend
+            ) || null,
+          visibility:
+            "public",
+        })
+        .select(
+          "id,created_at"
+        )
+        .single();
 
       if (postError) {
         throw new Error(
           `posts: ${postError.message}`
         );
       }
-
-      /*
-       * ----------------------------
-       * MEMORY MEDIA
-       * ----------------------------
-       */
 
       const uploadedMedia:
         PostMedia[] = [];
@@ -1302,27 +1720,23 @@ export default function MusicComposer() {
           const {
             error:
               uploadError,
-          } =
-            await supabase
-              .storage
-              .from(
-                "memories"
-              )
-              .upload(
-                storagePath,
-                file,
-                {
-                  contentType:
-                    file.type,
+          } = await supabase
+            .storage
+            .from(
+              "memories"
+            )
+            .upload(
+              storagePath,
+              file,
+              {
+                contentType:
+                  file.type,
+                upsert:
+                  false,
+              }
+            );
 
-                  upsert:
-                    false,
-                }
-              );
-
-          if (
-            uploadError
-          ) {
+          if (uploadError) {
             throw new Error(
               `storage: ${uploadError.message}`
             );
@@ -1333,36 +1747,31 @@ export default function MusicComposer() {
               mediaRow,
             error:
               mediaError,
-          } =
-            await supabase
-              .from(
-                "post_media"
-              )
-              .insert({
-                post_id:
-                  post.id,
+          } = await supabase
+            .from(
+              "post_media"
+            )
+            .insert({
+              post_id:
+                post.id,
+              storage_path:
+                storagePath,
+              position:
+                index,
+            })
+            .select(
+              `
+                id,
+                storage_path,
+                position,
+                width,
+                height,
+                aspect_ratio
+              `
+            )
+            .single();
 
-                storage_path:
-                  storagePath,
-
-                position:
-                  index,
-              })
-              .select(
-                `
-                  id,
-                  storage_path,
-                  position,
-                  width,
-                  height,
-                  aspect_ratio
-                `
-              )
-              .single();
-
-          if (
-            mediaError
-          ) {
+          if (mediaError) {
             throw new Error(
               `post_media: ${mediaError.message}`
             );
@@ -1380,316 +1789,134 @@ export default function MusicComposer() {
 
           uploadedMedia.push({
             ...mediaRow,
-
             public_url:
               publicUrl,
           });
         }
       }
 
-      /*
-       * ----------------------------
-       * PERFIL DO AUTOR
-       * ----------------------------
-       */
-
       const {
         data: profile,
         error:
           profileError,
-      } =
-        await supabase
-          .from("profiles")
-          .select(
-            `
-              id,
-              username,
-              display_name,
-              bio,
-              avatar_url
-            `
-          )
-          .eq(
-            "id",
-            user.id
-          )
-          .single();
+      } = await supabase
+        .from("profiles")
+        .select(
+          `
+            id,
+            username,
+            display_name,
+            bio,
+            avatar_url
+          `
+        )
+        .eq(
+          "id",
+          user.id
+        )
+        .single();
 
-      if (
-        profileError
-      ) {
+      if (profileError) {
         throw new Error(
           `profile: ${profileError.message}`
         );
       }
 
-      /*
-       * ----------------------------
-       * POST COMPLETO
-       *
-       * Story Card ainda usa post.track para a camada visual.
-       * Em Review de álbum entregamos ali o mesmo adapter que
-       * o Feed usa, sem criar track falsa no banco.
-       * ----------------------------
-       */
+      const subjectId =
+        trackId ||
+        albumId ||
+        artistId ||
+        playlistId;
 
-      if (
-        album &&
-        albumId
-      ) {
-        const albumRecord = {
-          id:
-            albumId,
-
-          provider:
-            album.provider,
-
-          provider_album_id:
-            album.provider_album_id,
-
-          title:
-            album.title,
-
-          artist:
-            album.artist,
-
-          artwork_url:
-            album.artwork_url,
-
-          source_url:
-            album.source_url,
-
-          spotify_url:
-            album.spotify_url ??
-            null,
-
-          apple_music_url:
-            album.apple_music_url ??
-            null,
-
-          deezer_url:
-            album.deezer_url ??
-            null,
-
-          release_date:
-            album.release_date ??
-            null,
-
-          total_tracks:
-            album.total_tracks ??
-            null,
-        };
-
-        const createdPost:
-          Post = {
-            id:
-              post.id,
-
-            type:
-              "review",
-
-            body:
-              body.trim(),
-
-            rating,
-
-            trend:
-              cleanTag(
-                trend
-              ) || null,
-
-            created_at:
-              post.created_at ??
-              new Date()
-                .toISOString(),
-
-            author:
-              profile as Profile,
-
-            subject_kind:
-              "album",
-
-            album:
-              albumRecord,
-
-            track: {
-              id:
-                albumId,
-
-              provider:
-                album.provider,
-
-              provider_track_id:
-                null,
-
-              title:
-                album.title,
-
-              artist:
-                album.artist,
-
-              album:
-                album.title,
-
-              artwork_url:
-                album.artwork_url,
-
-              source_url:
-                album.source_url,
-
-              spotify_url:
-                album.spotify_url,
-
-              apple_music_url:
-                album.apple_music_url,
-
-              deezer_url:
-                album.deezer_url,
-
-              duration_ms:
-                null,
-            },
-
-            media: [],
-
-            counts: {
-              likes: 0,
-              comments: 0,
-              reposts: 0,
-
-              liked:
-                false,
-
-              reposted:
-                false,
-            },
-          };
-
-        setPublishedPost(
-          createdPost
-        );
-      } else if (
-        track &&
-        trackId
-      ) {
-        const createdPost:
-          Post = {
-            id:
-              post.id,
-
-            type:
-              postType,
-
-            body:
-              body.trim(),
-
-            rating:
-              postType ===
-              "review"
-                ? rating
-                : null,
-
-            trend:
-              cleanTag(
-                trend
-              ) || null,
-
-            created_at:
-              post.created_at ??
-              new Date()
-                .toISOString(),
-
-            author:
-              profile as Profile,
-
-            subject_kind:
-              "track",
-
-            album:
-              null,
-
-            track: {
-              id:
-                trackId,
-
-              provider:
-                track.provider,
-
-              provider_track_id:
-                track.provider_track_id,
-
-              title:
-                track.title,
-
-              artist:
-                track.artist,
-
-              album:
-                track.album,
-
-              artwork_url:
-                track.artwork_url,
-
-              source_url:
-                track.source_url,
-
-              spotify_url:
-                track.spotify_url,
-
-              apple_music_url:
-                track.apple_music_url,
-
-              deezer_url:
-                track.deezer_url,
-
-              duration_ms:
-                track.duration_ms,
-            },
-
-            media:
-              uploadedMedia,
-
-            counts: {
-              likes: 0,
-              comments: 0,
-              reposts: 0,
-
-              liked:
-                false,
-
-              reposted:
-                false,
-            },
-          };
-
-        setPublishedPost(
-          createdPost
-        );
-      } else {
+      if (!subjectId) {
         throw new Error(
-          "Não consegui identificar a música ou o álbum publicado."
+          "Não consegui salvar o assunto da publicação."
         );
       }
 
+      const createdPost:
+        Post = {
+          id:
+            post.id,
+          type:
+            postType,
+          body:
+            body.trim(),
+          rating:
+            postType ===
+            "review"
+              ? rating
+              : null,
+          trend:
+            cleanTag(
+              trend
+            ) || null,
+          created_at:
+            post.created_at ??
+            new Date()
+              .toISOString(),
+          author:
+            profile as Profile,
+          subject_kind:
+            subjectKind,
+          track:
+            displayTrack(
+              subjectId
+            ),
+          album:
+            album && albumId
+              ? ({
+                  id:
+                    albumId,
+                  ...album,
+                } as Album)
+              : null,
+          artist:
+            artist &&
+            artistId
+              ? ({
+                  id:
+                    artistId,
+                  ...artist,
+                } as Artist)
+              : null,
+          playlist:
+            playlist &&
+            playlistId
+              ? ({
+                  id:
+                    playlistId,
+                  ...playlist,
+                } as Playlist)
+              : null,
+          media:
+            uploadedMedia,
+          counts: {
+            likes: 0,
+            comments: 0,
+            reposts: 0,
+            liked: false,
+            reposted:
+              false,
+          },
+        };
+
+      setPublishedPost(
+        createdPost
+      );
       setPublished(
         post.id
       );
-    } catch (error) {
+    } catch (caught) {
       setError(
-        error instanceof Error
-          ? error.message
+        caught instanceof Error
+          ? caught.message
           : "Não consegui publicar."
       );
     } finally {
       setBusy(false);
     }
   }
-
-  /*
-   * ========================================================
-   * STORY PÓS-PUBLICAÇÃO
-   * ========================================================
-   */
 
   async function sharePublishedStory() {
     if (!publishedPost) {
@@ -1705,13 +1932,19 @@ export default function MusicComposer() {
           publishedPost
         );
 
-      if (result === "downloaded") {
+      if (
+        result ===
+        "downloaded"
+      ) {
         setShareMessage(
           "Story Card salvo."
         );
       }
 
-      if (result === "shared") {
+      if (
+        result ===
+        "shared"
+      ) {
         setShareMessage(
           "pronto para compartilhar."
         );
@@ -1724,12 +1957,6 @@ export default function MusicComposer() {
       setBusy(false);
     }
   }
-
-  /*
-   * ========================================================
-   * TELA DE SUCESSO
-   * ========================================================
-   */
 
   if (published) {
     return (
@@ -1798,11 +2025,14 @@ export default function MusicComposer() {
     );
   }
 
-  /*
-   * ========================================================
-   * COMPOSER
-   * ========================================================
-   */
+  const hasSearchResults =
+    results.length > 0 ||
+    albumResults.length >
+      0 ||
+    artistResults.length >
+      0 ||
+    playlistResults.length >
+      0;
 
   return (
     <div className="shell">
@@ -1816,277 +2046,136 @@ export default function MusicComposer() {
         </span>
       </div>
 
-      {!track && !album ? (
-        <>
-          {/*
-           * -----------------------
-           * MODOS
-           * -----------------------
-           */}
+      {!selectedSubject ? (
+        <div className="stack">
+          <div>
+            <h1 className="pageTitle">
+              o que você quer
+              compartilhar?
+            </h1>
 
-          <div className="tabs">
-            <button
-              className={`tab ${
-                mode === "listen"
-                  ? "active"
-                  : ""
-              }`}
-              onClick={() =>
-                setMode("listen")
-              }
-            >
-              ouvir
-            </button>
+            <p className="subtle">
+              busque por música,
+              álbum, artista ou
+              playlist — ou cole um
+              link.
+            </p>
+          </div>
+
+          <div className="searchbar">
+            <input
+              className="field"
+              value={input}
+              onChange={(
+                event
+              ) => {
+                setInput(
+                  event.target
+                    .value
+                );
+                setError("");
+              }}
+              onKeyDown={(
+                event
+              ) => {
+                if (
+                  event.key ===
+                  "Enter"
+                ) {
+                  void submitInput();
+                }
+              }}
+              placeholder="música, álbum, artista, playlist ou link"
+              autoComplete="off"
+            />
 
             <button
-              className={`tab ${
-                mode === "link"
-                  ? "active"
-                  : ""
-              }`}
+              className="primary"
               onClick={() =>
-                setMode("link")
+                void submitInput()
               }
+              disabled={busy}
+              aria-label="Buscar ou abrir link"
             >
-              link
-            </button>
-
-            <button
-              className={`tab ${
-                mode === "search"
-                  ? "active"
-                  : ""
-              }`}
-              onClick={() =>
-                setMode("search")
-              }
-            >
-              buscar
+              <Search
+                size={18}
+              />
             </button>
           </div>
 
-          {/*
-           * -----------------------
-           * O QUE TÁ TOCANDO?
-           * -----------------------
-           */}
-
-          {mode === "listen" && (
-            <MusicRecognition
-              onFound={setTrack}
+          <button
+            type="button"
+            className="secondary"
+            onClick={() =>
+              void pasteFromClipboard()
+            }
+            disabled={busy}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems:
+                "center",
+              justifyContent:
+                "center",
+              gap: 8,
+            }}
+          >
+            <ClipboardPaste
+              size={16}
             />
-          )}
+            usar o que está
+            copiado
+          </button>
 
-          {/*
-           * -----------------------
-           * COLAR LINK
-           * -----------------------
-           */}
-
-          {mode === "link" && (
-            <div className="stack">
-              <h1 className="pageTitle">
-                cole a música.
-              </h1>
-
-              <button
-                type="button"
-                className="secondary"
-                onClick={() =>
-                  void pasteMusicLink()
-                }
-                disabled={busy}
-                style={{
-                  width: "100%",
-                  marginBottom: 12,
-                  display: "flex",
-                  alignItems:
-                    "center",
-                  justifyContent:
-                    "center",
-                  gap: 8,
-                }}
-              >
-                <ClipboardPaste
-                  size={16}
+          <button
+            type="button"
+            className="choice"
+            onClick={() => {
+              setRecognitionOpen(
+                (current) =>
+                  !current
+              );
+              setError("");
+            }}
+          >
+            <span
+              className="choiceIcon"
+              aria-hidden="true"
+            >
+              {recognitionOpen ? (
+                <X
+                  size={25}
+                  strokeWidth={1.8}
                 />
-                usar link copiado
-              </button>
-
-              <div className="searchbar">
-                <input
-                  className="field"
-                  value={url}
-                  onChange={(event) =>
-                    setUrl(
-                      event.target
-                        .value
-                    )
-                  }
-                  placeholder="Spotify, Apple Music, Deezer ou YouTube"
-                  inputMode="url"
+              ) : (
+                <Mic2
+                  size={25}
+                  strokeWidth={1.8}
                 />
+              )}
+            </span>
 
-                <button
-                  className="primary"
-                  disabled={busy}
-                  onClick={() =>
-                    resolve()
-                  }
-                >
-                  <Link2 size={18} />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/*
-           * -----------------------
-           * BUSCAR
-           * -----------------------
-           */}
-
-          {mode === "search" && (
             <div>
-              <h1 className="pageTitle">
-                qual foi?
-              </h1>
+              <strong>
+                {recognitionOpen
+                  ? "fechar reconhecimento"
+                  : "o que tá tocando?"}
+              </strong>
 
-              <div
-                className="tabs"
-                aria-label="Tipo de busca"
-                style={{
-                  marginBottom: 12,
-                }}
-              >
-                <button
-                  type="button"
-                  className={`tab ${
-                    searchTarget ===
-                    "track"
-                      ? "active"
-                      : ""
-                  }`}
-                  onClick={() => {
-                    setSearchTarget(
-                      "track"
-                    );
-                    setAlbumResults(
-                      []
-                    );
-                    setError("");
-                  }}
-                >
-                  música
-                </button>
-
-                <button
-                  type="button"
-                  className={`tab ${
-                    searchTarget ===
-                    "album"
-                      ? "active"
-                      : ""
-                  }`}
-                  onClick={() => {
-                    setSearchTarget(
-                      "album"
-                    );
-                    setResults([]);
-                    setError("");
-                  }}
-                >
-                  álbum
-                </button>
-              </div>
-
-              <div className="searchbar">
-                <input
-                  className="field"
-                  value={query}
-                  onChange={(event) =>
-                    setQuery(
-                      event.target
-                        .value
-                    )
-                  }
-                  onKeyDown={(
-                    event
-                  ) => {
-                    if (
-                      event.key ===
-                      "Enter"
-                    ) {
-                      void search();
-                    }
-                  }}
-                  placeholder={
-                    searchTarget === "album"
-                      ? "álbum ou artista"
-                      : "música, artista ou álbum"
-                  }
-                />
-
-                <button
-                  className="primary"
-                  onClick={() =>
-                    void search()
-                  }
-                  disabled={busy}
-                >
-                  <Search size={18} />
-                </button>
-              </div>
-
-              <div className="results">
-                {results.map(
-                  (
-                    result,
-                    index
-                  ) => (
-                    <TrackPreview
-                      key={`${result.provider}-${result.provider_track_id}-${index}`}
-                      track={
-                        result
-                      }
-                      onClick={() =>
-                        setTrack(
-                          result
-                        )
-                      }
-                    />
-                  )
-                )}
-
-                {albumResults.map(
-                  (
-                    result,
-                    index
-                  ) => (
-                    <AlbumPreview
-                      key={`${result.provider}-${result.provider_album_id}-${index}`}
-                      album={
-                        result
-                      }
-                      onClick={() => {
-                        setAlbum(
-                          result
-                        );
-                        setTrack(
-                          null
-                        );
-                        setPostType(
-                          "review"
-                        );
-                        setError(
-                          ""
-                        );
-                      }}
-                    />
-                  )
-                )}
-              </div>
+              <span>
+                {recognitionOpen
+                  ? "voltar para buscar ou colar"
+                  : "ouve alguns segundos e tenta identificar"}
+              </span>
             </div>
+          </button>
+
+          {recognitionOpen && (
+            <MusicRecognition
+              onFound={
+                chooseTrack
+              }
+            />
           )}
 
           {busy && (
@@ -2096,25 +2185,168 @@ export default function MusicComposer() {
           )}
 
           {error && (
-            <div className="error">
+            <div
+              className="error"
+              role="alert"
+            >
               {error}
             </div>
           )}
-        </>
-      ) : !postType ? (
-        /*
-         * =============================================
-         * REVIEW OU MEMORY?
-         * =============================================
-         */
 
+          {hasSearchResults && (
+            <div className="results">
+              {results.length >
+                0 && (
+                <>
+                  <p className="subtle">
+                    músicas
+                  </p>
+
+                  {results.map(
+                    (
+                      result,
+                      index
+                    ) => (
+                      <TrackPreview
+                        key={`${result.provider}-${result.provider_track_id}-${index}`}
+                        track={
+                          result
+                        }
+                        onClick={() =>
+                          chooseTrack(
+                            result
+                          )
+                        }
+                      />
+                    )
+                  )}
+                </>
+              )}
+
+              {albumResults
+                .length > 0 && (
+                <>
+                  <p className="subtle">
+                    álbuns
+                  </p>
+
+                  {albumResults.map(
+                    (
+                      result,
+                      index
+                    ) => (
+                      <UniversalPreview
+                        key={`${result.provider}-${result.provider_album_id}-${index}`}
+                        subject={{
+                          kind:
+                            "album",
+                          title:
+                            result.title,
+                          subtitle:
+                            result.artist,
+                          artwork_url:
+                            result.artwork_url,
+                          source_url:
+                            result.source_url,
+                        }}
+                        onClick={() =>
+                          chooseAlbum(
+                            result
+                          )
+                        }
+                      />
+                    )
+                  )}
+                </>
+              )}
+
+              {artistResults
+                .length > 0 && (
+                <>
+                  <p className="subtle">
+                    artistas
+                  </p>
+
+                  {artistResults.map(
+                    (
+                      result,
+                      index
+                    ) => (
+                      <UniversalPreview
+                        key={`${result.provider}-${result.provider_artist_id}-${index}`}
+                        subject={{
+                          kind:
+                            "artist",
+                          title:
+                            result.name,
+                          subtitle:
+                            "artista",
+                          artwork_url:
+                            result.artwork_url,
+                          source_url:
+                            result.source_url,
+                        }}
+                        onClick={() =>
+                          chooseArtist(
+                            result
+                          )
+                        }
+                      />
+                    )
+                  )}
+                </>
+              )}
+
+              {playlistResults
+                .length > 0 && (
+                <>
+                  <p className="subtle">
+                    playlists
+                  </p>
+
+                  {playlistResults.map(
+                    (
+                      result,
+                      index
+                    ) => (
+                      <UniversalPreview
+                        key={`${result.provider}-${result.provider_playlist_id}-${index}`}
+                        subject={{
+                          kind:
+                            "playlist",
+                          title:
+                            result.title,
+                          subtitle:
+                            result.owner_name ||
+                            "playlist",
+                          artwork_url:
+                            result.artwork_url,
+                          source_url:
+                            result.source_url,
+                        }}
+                        onClick={() =>
+                          choosePlaylist(
+                            result
+                          )
+                        }
+                      />
+                    )
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      ) : !postType ? (
         <div>
           <h1 className="pageTitle">
             o que ficou?
           </h1>
 
-          <TrackPreview
-            track={track!}
+          <UniversalPreview
+            subject={
+              selectedSubject
+            }
           />
 
           <div
@@ -2126,11 +2358,19 @@ export default function MusicComposer() {
           <button
             className="choice"
             onClick={() =>
-              setPostType("review")
+              setPostType(
+                "review"
+              )
             }
           >
-            <span className="choiceIcon" aria-hidden="true">
-              <Star size={25} strokeWidth={1.8} />
+            <span
+              className="choiceIcon"
+              aria-hidden="true"
+            >
+              <Star
+                size={25}
+                strokeWidth={1.8}
+              />
             </span>
 
             <div>
@@ -2148,11 +2388,19 @@ export default function MusicComposer() {
           <button
             className="choice"
             onClick={() =>
-              setPostType("memory")
+              setPostType(
+                "memory"
+              )
             }
           >
-            <span className="choiceIcon" aria-hidden="true">
-              <ImagePlus size={25} strokeWidth={1.8} />
+            <span
+              className="choiceIcon"
+              aria-hidden="true"
+            >
+              <ImagePlus
+                size={25}
+                strokeWidth={1.8}
+              />
             </span>
 
             <div>
@@ -2161,8 +2409,8 @@ export default function MusicComposer() {
               </strong>
 
               <span>
-                guardar a música
-                junto do momento
+                guardar isso junto
+                de um momento
               </span>
             </div>
           </button>
@@ -2172,44 +2420,41 @@ export default function MusicComposer() {
             style={{
               marginTop: 12,
             }}
-            onClick={() =>
-              setTrack(null)
+            onClick={
+              clearSubject
             }
           >
-            trocar música
+            trocar{" "}
+            {subjectLabel(
+              subjectKind!
+            )}
           </button>
         </div>
       ) : (
-        /*
-         * =============================================
-         * EDITOR DO POST
-         * =============================================
-         */
-
         <div className="stack">
           <h1 className="pageTitle">
-            {postType === "review"
-              ? album
-                ? "o que ficou desse álbum?"
-                : "o que ela fez com você?"
+            {postType ===
+            "review"
+              ? `o que ficou ${
+                  subjectKind ===
+                  "artist"
+                    ? "desse artista"
+                    : subjectKind ===
+                        "playlist"
+                      ? "dessa playlist"
+                      : subjectKind ===
+                          "album"
+                        ? "desse álbum"
+                        : "dessa música"
+                }?`
               : "guarde isso."}
           </h1>
 
-          {album ? (
-            <AlbumPreview
-              album={album}
-            />
-          ) : (
-            <TrackPreview
-              track={track!}
-            />
-          )}
-
-          {/*
-           * -----------------------
-           * REVIEW
-           * -----------------------
-           */}
+          <UniversalPreview
+            subject={
+              selectedSubject
+            }
+          />
 
           {postType ===
             "review" && (
@@ -2224,15 +2469,8 @@ export default function MusicComposer() {
                   setRating
                 }
               />
-
             </>
           )}
-
-          {/*
-           * -----------------------
-           * MEMORY
-           * -----------------------
-           */}
 
           {postType ===
             "memory" && (
@@ -2335,12 +2573,6 @@ export default function MusicComposer() {
             </>
           )}
 
-          {/*
-           * -----------------------
-           * TAG COLETIVA
-           * -----------------------
-           */}
-
           <div
             style={{
               position:
@@ -2386,7 +2618,7 @@ export default function MusicComposer() {
                   transform:
                     "translateY(-50%)",
                   color:
-                    "#8a8a85",
+                    "var(--muted)",
                   pointerEvents:
                     "none",
                 }}
@@ -2451,8 +2683,6 @@ export default function MusicComposer() {
                       "var(--surface-solid)",
                     boxShadow:
                       "0 18px 50px rgba(0,0,0,.12)",
-                    backdropFilter:
-                      "blur(20px)",
                   }}
                 >
                   <div
@@ -2541,9 +2771,7 @@ export default function MusicComposer() {
                               13,
                           }}
                         >
-                          {
-                            item.label
-                          }
+                          {item.label}
                         </strong>
 
                         <span
@@ -2555,9 +2783,7 @@ export default function MusicComposer() {
                               10,
                           }}
                         >
-                          {
-                            item.count
-                          }{" "}
+                          {item.count}{" "}
                           {item.count ===
                           1
                             ? "post"
@@ -2568,35 +2794,7 @@ export default function MusicComposer() {
                   )}
                 </div>
               )}
-
-            {tagTerm &&
-              !tagSuggestions.some(
-                (item) =>
-                  item.label.toLowerCase() ===
-                  tagTerm
-              ) && (
-                <p
-                  className="subtle"
-                  style={{
-                    margin:
-                      "6px 2px 0",
-                    fontSize:
-                      10,
-                  }}
-                >
-                  nova tag · #
-                  {cleanTag(
-                    trend
-                  )}
-                </p>
-              )}
           </div>
-
-          {/*
-           * -----------------------
-           * TEXTO
-           * -----------------------
-           */}
 
           <textarea
             className="field"
@@ -2610,16 +2808,40 @@ export default function MusicComposer() {
             }
             maxLength={4000}
             placeholder={
-              postType === "review"
-                ? album
-                  ? "escreva sua review do álbum"
-                  : "escreva sua review"
-                : "o que estava acontecendo quando ela tocou?"
+              postType ===
+              "review"
+                ? `escreva sua review ${
+                    subjectKind ===
+                    "artist"
+                      ? "do artista"
+                      : subjectKind ===
+                          "playlist"
+                        ? "da playlist"
+                        : subjectKind ===
+                            "album"
+                          ? "do álbum"
+                          : "da música"
+                  }`
+                : `qual é a história ${
+                    subjectKind ===
+                    "artist"
+                      ? "desse artista"
+                      : subjectKind ===
+                          "playlist"
+                        ? "dessa playlist"
+                        : subjectKind ===
+                            "album"
+                          ? "desse álbum"
+                          : "dessa música"
+                  }?`
             }
           />
 
           {error && (
-            <div className="error">
+            <div
+              className="error"
+              role="alert"
+            >
               {error}
             </div>
           )}
@@ -2638,24 +2860,9 @@ export default function MusicComposer() {
 
           <button
             className="secondary"
-            onClick={() => {
-              if (album) {
-                setAlbum(
-                  null
-                );
-                setAlbumResults(
-                  []
-                );
-                setPostType(
-                  null
-                );
-                return;
-              }
-
-              setPostType(
-                null
-              );
-            }}
+            onClick={() =>
+              setPostType(null)
+            }
           >
             voltar
           </button>

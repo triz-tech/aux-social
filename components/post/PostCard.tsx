@@ -8,10 +8,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import {
+  useMemo,
   useState,
 } from "react";
 
-import type { Post } from "@/types";
+import type {
+  Post,
+  PostSubjectKind,
+} from "@/types";
 
 import MemoryCarousel from "@/components/memory/MemoryCarousel";
 import {
@@ -20,40 +24,127 @@ import {
 } from "@/components/review/RatingStars";
 import Avatar from "@/components/ui/Avatar";
 
+import { IS_DEMO } from "@/lib/config";
 import { createClient } from "@/lib/supabase/client";
 import { timeAgo } from "@/lib/utils";
 
 import PostActions from "./PostActions";
 import styles from "./PostCard.module.css";
 
+function labelForSubject(
+  kind: PostSubjectKind
+) {
+  if (kind === "album") {
+    return "álbum";
+  }
+
+  if (kind === "artist") {
+    return "artista";
+  }
+
+  if (kind === "playlist") {
+    return "playlist";
+  }
+
+  return "música";
+}
+
 export default function PostCard({
   post,
+  viewerId,
 }: {
   post: Post;
+  viewerId?: string | null;
 }) {
   const isReview =
     post.type === "review";
 
-  const isAlbumReview =
-    isReview &&
-    post.subject_kind ===
-      "album" &&
-    Boolean(post.album);
-
-  /*
-   * Reviews podem apontar para uma música ou um álbum.
-   * Memories continuam sempre apontando para música.
-   */
-  const subject =
-    isAlbumReview &&
-    post.album
-      ? post.album
-      : post.track;
+  const subjectKind =
+    post.subject_kind ??
+    "track";
 
   const subjectLabel =
-    isAlbumReview
-      ? "álbum"
-      : "música";
+    labelForSubject(
+      subjectKind
+    );
+
+  /*
+   * `post.track` continua sendo o adapter visual universal.
+   * Assim MemoryCarousel, Story Card e componentes antigos
+   * continuam funcionando, enquanto aqui usamos os objetos
+   * reais quando eles existem.
+   */
+  const subject =
+    useMemo(() => {
+      if (
+        subjectKind ===
+          "album" &&
+        post.album
+      ) {
+        return {
+          title:
+            post.album.title,
+          artist:
+            post.album.artist,
+          artwork_url:
+            post.album.artwork_url,
+          source_url:
+            post.album.source_url,
+        };
+      }
+
+      if (
+        subjectKind ===
+          "artist" &&
+        post.artist
+      ) {
+        return {
+          title:
+            post.artist.name,
+          artist: "artista",
+          artwork_url:
+            post.artist.artwork_url,
+          source_url:
+            post.artist.source_url,
+        };
+      }
+
+      if (
+        subjectKind ===
+          "playlist" &&
+        post.playlist
+      ) {
+        return {
+          title:
+            post.playlist.title,
+          artist:
+            post.playlist
+              .owner_name ||
+            "playlist",
+          artwork_url:
+            post.playlist
+              .artwork_url,
+          source_url:
+            post.playlist
+              .source_url,
+        };
+      }
+
+      return {
+        title:
+          post.track.title,
+        artist:
+          post.track.artist,
+        artwork_url:
+          post.track
+            .artwork_url,
+        source_url:
+          post.track.source_url,
+      };
+    }, [
+      post,
+      subjectKind,
+    ]);
 
   const [body, setBody] =
     useState(post.body);
@@ -64,27 +155,41 @@ export default function PostCard({
     );
 
   const [trend, setTrend] =
-    useState(post.trend ?? "");
-
-  const [editOpen, setEditOpen] =
-    useState(false);
-
-  const [draftBody, setDraftBody] =
-    useState(post.body);
-
-  const [draftRating, setDraftRating] =
     useState(
-      post.rating ?? 4.5
+      post.trend ?? ""
     );
 
-  const [draftTrend, setDraftTrend] =
-    useState(post.trend ?? "");
+  const [
+    editOpen,
+    setEditOpen,
+  ] = useState(false);
+
+  const [
+    draftBody,
+    setDraftBody,
+  ] = useState(post.body);
+
+  const [
+    draftRating,
+    setDraftRating,
+  ] = useState(
+    post.rating ?? 4.5
+  );
+
+  const [
+    draftTrend,
+    setDraftTrend,
+  ] = useState(
+    post.trend ?? ""
+  );
 
   const [saving, setSaving] =
     useState(false);
 
-  const [editError, setEditError] =
-    useState("");
+  const [
+    editError,
+    setEditError,
+  ] = useState("");
 
   function openEditor() {
     setDraftBody(body);
@@ -121,14 +226,20 @@ export default function PostCard({
       return;
     }
 
-    if (cleanBody.length > 4000) {
+    if (
+      cleanBody.length >
+      4000
+    ) {
       setEditError(
         "o texto ficou grande demais."
       );
       return;
     }
 
-    if (cleanTrend.length > 40) {
+    if (
+      cleanTrend.length >
+      40
+    ) {
       setEditError(
         "a tag pode ter no máximo 40 caracteres."
       );
@@ -142,14 +253,27 @@ export default function PostCard({
       const supabase =
         createClient();
 
-      const {
-        data: { user },
-      } =
-        await supabase.auth.getUser();
+      let currentViewerId =
+        viewerId ?? null;
 
       if (
-        !user ||
-        user.id !== post.author.id
+        !currentViewerId &&
+        !IS_DEMO
+      ) {
+        const {
+          data: { user },
+        } =
+          await supabase.auth
+            .getUser();
+
+        currentViewerId =
+          user?.id ?? null;
+      }
+
+      if (
+        !currentViewerId ||
+        currentViewerId !==
+          post.author.id
       ) {
         throw new Error(
           "essa publicação não pertence a você."
@@ -162,16 +286,24 @@ export default function PostCard({
       } = await supabase
         .from("posts")
         .update({
-          body: cleanBody,
+          body:
+            cleanBody,
           trend:
-            cleanTrend || null,
+            cleanTrend ||
+            null,
           rating:
             isReview
               ? draftRating
               : null,
         })
-        .eq("id", post.id)
-        .eq("user_id", user.id)
+        .eq(
+          "id",
+          post.id
+        )
+        .eq(
+          "user_id",
+          currentViewerId
+        )
         .select(
           "body,rating,trend"
         )
@@ -182,20 +314,24 @@ export default function PostCard({
       }
 
       setBody(data.body);
+
       setRating(
         data.rating === null
           ? null
-          : Number(data.rating)
+          : Number(
+              data.rating
+            )
       );
+
       setTrend(
         data.trend ?? ""
       );
 
       setEditOpen(false);
-    } catch (error) {
+    } catch (caught) {
       setEditError(
-        error instanceof Error
-          ? error.message
+        caught instanceof Error
+          ? caught.message
           : "não consegui salvar essa edição."
       );
     } finally {
@@ -203,19 +339,29 @@ export default function PostCard({
     }
   }
 
-  /*
-   * Reviews de 0.5 a 2.5 recebem a identidade
-   * laranja. De 3 a 5 continuam verdes.
-   */
   const isBadReview =
     isReview &&
-    typeof rating === "number" &&
+    typeof rating ===
+      "number" &&
     rating <= 2.5;
+
+  const kindText =
+    isReview
+      ? subjectKind ===
+        "track"
+        ? "review"
+        : `review · ${subjectLabel}`
+      : subjectKind ===
+          "track"
+        ? "memory"
+        : `memory · ${subjectLabel}`;
 
   return (
     <>
       <article
-        className={`post ${styles.post} ${
+        className={`post ${
+          styles.post
+        } ${
           isReview
             ? styles.review
             : styles.memory
@@ -225,51 +371,61 @@ export default function PostCard({
             : ""
         }`}
       >
-        {/* QUEM REPOSTOU */}
-
         {post.reposted_by && (
           <div
             className="subtle"
             style={{
               display: "flex",
-              alignItems: "center",
+              alignItems:
+                "center",
               gap: 6,
               padding:
                 "12px 16px 0",
               fontSize: 13,
             }}
           >
-            <Repeat2 size={14} />
+            <Repeat2
+              size={14}
+            />
 
             <Link
               href={`/u/${post.reposted_by.username}`}
               style={{
-                color: "inherit",
+                color:
+                  "inherit",
                 textDecoration:
                   "none",
               }}
             >
-              @{post.reposted_by.username} repostou
+              @
+              {
+                post
+                  .reposted_by
+                  .username
+              }{" "}
+              repostou
             </Link>
           </div>
         )}
-
-        {/* AUTOR + TIPO DE PUBLICAÇÃO */}
 
         <header className="postHead">
           <Link
             href={`/u/${post.author.username}`}
             aria-label={`Ver perfil de ${post.author.display_name}`}
             style={{
-              display: "block",
+              display:
+                "block",
               flexShrink: 0,
-              color: "inherit",
+              color:
+                "inherit",
               textDecoration:
                 "none",
             }}
           >
             <Avatar
-              profile={post.author}
+              profile={
+                post.author
+              }
             />
           </Link>
 
@@ -277,7 +433,8 @@ export default function PostCard({
             <Link
               href={`/u/${post.author.username}`}
               style={{
-                color: "inherit",
+                color:
+                  "inherit",
                 textDecoration:
                   "none",
               }}
@@ -300,7 +457,11 @@ export default function PostCard({
                     "none",
                 }}
               >
-                @{post.author.username}
+                @
+                {
+                  post.author
+                    .username
+                }
               </Link>
 
               {" · "}
@@ -325,11 +486,7 @@ export default function PostCard({
                 styles.postKind
               }
               aria-label={
-                isAlbumReview
-                  ? "Review de álbum"
-                  : isReview
-                    ? "Review de música"
-                    : "Memory"
+                kindText
               }
             >
               <span
@@ -344,18 +501,11 @@ export default function PostCard({
               </span>
 
               <span>
-                {isAlbumReview
-                  ? "review · álbum"
-                  : isReview
-                    ? "review"
-                    : "memory"}
+                {kindText}
               </span>
             </div>
-
           </div>
         </header>
-
-        {/* CONTEÚDO */}
 
         {isReview ? (
           <div className="artwork">
@@ -367,11 +517,14 @@ export default function PostCard({
                     .artwork_url
                 }
                 alt={`Capa de ${subject.title}`}
+                loading="lazy"
+                decoding="async"
               />
             )}
 
             <div className="artworkOverlay">
-              {isAlbumReview && (
+              {subjectKind !==
+                "track" && (
                 <span
                   style={{
                     display:
@@ -388,7 +541,7 @@ export default function PostCard({
                     opacity: 0.78,
                   }}
                 >
-                  álbum
+                  {subjectLabel}
                 </span>
               )}
 
@@ -407,11 +560,10 @@ export default function PostCard({
           />
         )}
 
-        {/* POST */}
-
         <div className="postBody">
           {isReview &&
-            rating !== null && (
+            rating !==
+              null && (
               <RatingStars
                 value={rating}
               />
@@ -445,27 +597,28 @@ export default function PostCard({
             {body}
           </p>
 
-          {/* ABRIR MÚSICA / ÁLBUM */}
-
           <a
             className="trackline"
             href={
-              subject
-                .source_url
+              subject.source_url
             }
             target="_blank"
             rel="noreferrer"
-            aria-label={`Abrir ${subjectLabel} ${subject.title} de ${subject.artist}`}
+            aria-label={`Abrir ${subjectLabel} ${subject.title}`}
           >
-            <Music2 size={15} />
+            <Music2
+              size={15}
+            />
 
             <span>
-              {isAlbumReview
-                ? "álbum · "
+              {subjectKind !==
+                "track"
+                ? `${subjectLabel} · `
                 : ""}
               {subject.title}
-              {" · "}
-              {subject.artist}
+              {subject.artist
+                ? ` · ${subject.artist}`
+                : ""}
             </span>
 
             <ExternalLink
@@ -475,12 +628,15 @@ export default function PostCard({
 
           <PostActions
             post={post}
-            onEdit={openEditor}
+            viewerId={
+              viewerId
+            }
+            onEdit={
+              openEditor
+            }
           />
         </div>
       </article>
-
-      {/* EDITAR PUBLICAÇÃO */}
 
       {editOpen && (
         <div
@@ -518,17 +674,17 @@ export default function PostCard({
                     styles.editEyebrow
                   }
                 >
-                  {isAlbumReview
-                    ? "★ review · álbum"
-                    : isReview
-                      ? "★ review"
-                      : "◎ memory"}
+                  {isReview
+                    ? "★"
+                    : "◎"}{" "}
+                  {kindText}
                 </span>
 
                 <h2
                   id={`edit-post-${post.id}`}
                 >
-                  editar publicação
+                  editar
+                  publicação
                 </h2>
               </div>
 
@@ -541,9 +697,13 @@ export default function PostCard({
                   closeEditor
                 }
                 aria-label="Fechar"
-                disabled={saving}
+                disabled={
+                  saving
+                }
               >
-                <X size={19} />
+                <X
+                  size={19}
+                />
               </button>
             </div>
 
@@ -573,18 +733,14 @@ export default function PostCard({
 
               <div>
                 <strong>
-                  {
-                    subject
-                      .title
-                  }
+                  {subject.title}
                 </strong>
+
                 <span>
-                  {isAlbumReview
-                    ? "álbum · "
-                    : ""}
+                  {subjectLabel}
+                  {" · "}
                   {
-                    subject
-                      .artist
+                    subject.artist
                   }
                 </span>
               </div>
@@ -640,7 +796,9 @@ export default function PostCard({
                       .value
                   )
                 }
-                maxLength={4000}
+                maxLength={
+                  4000
+                }
                 rows={6}
                 autoFocus
               />
@@ -685,7 +843,9 @@ export default function PostCard({
                       .value
                   )
                 }
-                maxLength={40}
+                maxLength={
+                  40
+                }
                 placeholder="opcional · ex: late night"
               />
             </div>
@@ -695,13 +855,12 @@ export default function PostCard({
                 styles.editHint
               }
             >
-              {isAlbumReview
-                ? "o álbum"
-                : "a música"}
+              o {subjectLabel}
               {!isReview
                 ? " e as fotos"
                 : ""}{" "}
-              continuam como estão.
+              continuam como
+              estão.
             </p>
 
             {editError && (
@@ -728,7 +887,9 @@ export default function PostCard({
                 onClick={
                   closeEditor
                 }
-                disabled={saving}
+                disabled={
+                  saving
+                }
               >
                 cancelar
               </button>
@@ -741,7 +902,9 @@ export default function PostCard({
                 onClick={() =>
                   void saveEdit()
                 }
-                disabled={saving}
+                disabled={
+                  saving
+                }
               >
                 {saving
                   ? "salvando..."

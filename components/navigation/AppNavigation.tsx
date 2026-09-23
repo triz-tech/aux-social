@@ -6,8 +6,12 @@ import BottomNavigation from "@/components/navigation/BottomNavigation";
 
 export default function AppNavigation({
   signedIn,
+  viewerId,
+  username,
 }: {
   signedIn: boolean;
+  viewerId: string | null;
+  username: string | null;
 }) {
   const pathname =
     usePathname();
@@ -16,7 +20,6 @@ export default function AppNavigation({
    * Usuário deslogado não recebe
    * a navegação do aplicativo.
    */
-
   if (!signedIn) {
     return null;
   }
@@ -25,15 +28,21 @@ export default function AppNavigation({
    * Essas telas têm experiência
    * própria.
    */
-const hidden =
-  pathname === "/login" ||
-  pathname === "/onboarding" ||
-  pathname === "/forgot-password" ||
-  pathname === "/reset-password" ||
-  pathname.startsWith("/auth/");
+  const hidden =
+    pathname === "/login" ||
+    pathname === "/onboarding" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password" ||
+    pathname.startsWith("/auth/");
+
   if (hidden) {
     return null;
   }
 
-  return <BottomNavigation />;
+  return (
+    <BottomNavigation
+      viewerId={viewerId}
+      username={username}
+    />
+  );
 }

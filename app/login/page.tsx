@@ -1,33 +1,80 @@
 "use client";
+
 import Link from "next/link";
-import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Suspense,
+  useState,
+} from "react";
+import {
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
 
 import { IS_DEMO } from "@/lib/config";
 import { createClient } from "@/lib/supabase/client";
 
 function Form() {
-  const router = useRouter();
-  const params = useSearchParams();
+  const router =
+    useRouter();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-const [mode, setMode] =
-  useState<"login" | "signup">(
-    params.get("signup") === "1"
-      ? "signup"
-      : "login"
-  );
-  const [msg, setMsg] = useState("");
-  const [busy, setBusy] = useState(false);
+  const params =
+    useSearchParams();
+
+  const [email, setEmail] =
+    useState("");
+
+  const [
+    password,
+    setPassword,
+  ] = useState("");
+
+  const [mode, setMode] =
+    useState<
+      "login" | "signup"
+    >(
+      params.get("signup") ===
+        "1"
+        ? "signup"
+        : "login"
+    );
+
+  const [msg, setMsg] =
+    useState("");
+
+  const [busy, setBusy] =
+    useState(false);
+
   const resetSuccess =
-  params.get("reset") === "success";
+    params.get("reset") ===
+    "success";
 
-  async function submit(event: React.FormEvent) {
+  function hardNavigate(
+    path: string
+  ) {
+    /*
+     * Depois que o Supabase grava a sessão no browser,
+     * fazemos uma navegação completa.
+     *
+     * Isso força o RootLayout server-side a executar de
+     * novo com os cookies recém-atualizados, evitando que
+     * AppNavigation/BottomNavigation continuem com
+     * signedIn=false ou username=null do layout anterior.
+     */
+    window.location.assign(
+      path
+    );
+  }
+
+  async function submit(
+    event: React.FormEvent
+  ) {
     event.preventDefault();
 
     if (IS_DEMO) {
-      router.push(params.get("next") || "/");
+      router.push(
+        params.get("next") ||
+          "/"
+      );
       return;
     }
 
@@ -35,65 +82,101 @@ const [mode, setMode] =
     setMsg("");
 
     try {
-      const supabase = createClient();
+      const supabase =
+        createClient();
 
-      if (mode === "signup") {
+      if (
+        mode === "signup"
+      ) {
         const callbackUrl =
           `${window.location.origin}/auth/callback?next=/onboarding`;
 
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: callbackUrl,
-          },
-        });
+        const {
+          data,
+          error,
+        } =
+          await supabase.auth
+            .signUp({
+              email,
+              password,
+              options: {
+                emailRedirectTo:
+                  callbackUrl,
+              },
+            });
 
-        if (error) throw error;
+        if (error) {
+          throw error;
+        }
 
         if (!data.session) {
-          setMsg("Conta criada. Confira seu email para continuar.");
+          setMsg(
+            "Conta criada. Confira seu email para continuar."
+          );
           return;
         }
 
-        router.push("/onboarding");
-        router.refresh();
+        hardNavigate(
+          "/onboarding"
+        );
 
         return;
       }
 
-const {
-  data: signInData,
-  error,
-} = await supabase.auth.signInWithPassword({
-  email,
-  password,
-});
+      const {
+        data:
+          signInData,
+        error,
+      } =
+        await supabase.auth
+          .signInWithPassword({
+            email,
+            password,
+          });
 
-if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
-const { data: profile } =
-  await supabase
-    .from("profiles")
-    .select("onboarding_completed")
-    .eq("id", signInData.user.id)
-    .maybeSingle();
+      const {
+        data: profile,
+      } =
+        await supabase
+          .from("profiles")
+          .select(
+            "onboarding_completed"
+          )
+          .eq(
+            "id",
+            signInData.user.id
+          )
+          .maybeSingle();
 
-/*
- * Conta existe, mas a pessoa ainda
- * não terminou de montar o perfil.
- */
-if (!profile?.onboarding_completed) {
-  router.push("/onboarding");
-  router.refresh();
-  return;
-}
+      /*
+       * Conta existe, mas a pessoa ainda
+       * não terminou de montar o perfil.
+       */
+      if (
+        !profile
+          ?.onboarding_completed
+      ) {
+        hardNavigate(
+          "/onboarding"
+        );
+        return;
+      }
 
-router.push(
-  params.get("next") || "/"
-);
+      const requestedNext =
+        params.get("next");
 
-router.refresh();
+      const next =
+        requestedNext?.startsWith(
+          "/"
+        )
+          ? requestedNext
+          : "/";
+
+      hardNavigate(next);
     } catch (error) {
       setMsg(
         error instanceof Error
@@ -107,8 +190,13 @@ router.refresh();
 
   return (
     <main className="shell">
-      <form className="authCard" onSubmit={submit}>
-        <div className="brand">aux.</div>
+      <form
+        className="authCard"
+        onSubmit={submit}
+      >
+        <div className="brand">
+          aux.
+        </div>
 
         <h1>
           {mode === "login"
@@ -123,18 +211,27 @@ router.refresh();
         </p>
 
         <div className="stack">
-            {resetSuccess && (
-  <div className="success">
-    senha alterada. já pode entrar.
-  </div>
-)}
+          {resetSuccess && (
+            <div className="success">
+              senha alterada. já
+              pode entrar.
+            </div>
+          )}
+
           <input
             className="field"
             type="email"
             autoComplete="email"
             required
             value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            onChange={(
+              event
+            ) =>
+              setEmail(
+                event.target
+                  .value
+              )
+            }
             placeholder="email"
           />
 
@@ -149,49 +246,77 @@ router.refresh();
             }
             required
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={(
+              event
+            ) =>
+              setPassword(
+                event.target
+                  .value
+              )
+            }
             placeholder="senha"
           />
 
           {msg && (
             <div
               className={
-                msg.startsWith("Conta") ? "success" : "error"
+                msg.startsWith(
+                  "Conta"
+                )
+                  ? "success"
+                  : "error"
               }
             >
               {msg}
             </div>
           )}
 
-          <button className="primary" disabled={busy}>
+          <button
+            className="primary"
+            disabled={busy}
+          >
             {busy
               ? "só um segundo…"
-              : mode === "login"
+              : mode ===
+                  "login"
                 ? "Entrar"
                 : "Criar conta"}
           </button>
-          {mode === "login" && (
-  <Link
-    href="/forgot-password"
-    style={{
-      display: "block",
-      textAlign: "center",
-      fontSize: 13,
-      color: "var(--muted)",
-      textDecoration: "none",
-      padding: "4px 0 8px",
-    }}
-  >
-    esqueci minha senha
-  </Link>
-)}
+
+          {mode ===
+            "login" && (
+            <Link
+              href="/forgot-password"
+              style={{
+                display:
+                  "block",
+                textAlign:
+                  "center",
+                fontSize: 13,
+                color:
+                  "var(--muted)",
+                textDecoration:
+                  "none",
+                padding:
+                  "4px 0 8px",
+              }}
+            >
+              esqueci minha
+              senha
+            </Link>
+          )}
 
           <button
             type="button"
             className="secondary"
             onClick={() => {
               setMsg("");
-              setMode(mode === "login" ? "signup" : "login");
+
+              setMode(
+                mode === "login"
+                  ? "signup"
+                  : "login"
+              );
             }}
           >
             {mode === "login"

@@ -4380,3 +4380,175 @@ html[data-theme="dark"] .iconBtn:hover {
 html[data-theme="dark"] .iconBtn.on {
   color: var(--text);
 }
+
+/* =========================================================
+   AUX — GLOBAL BUTTON FEEDBACK + DOUBLE-CLICK GUARD
+   ========================================================= */
+
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+[role="button"] {
+  -webkit-tap-highlight-color:
+    transparent;
+
+  transition:
+    scale 120ms ease,
+    opacity 120ms ease,
+    filter 120ms ease;
+}
+
+button:not(:disabled):active,
+input[type="button"]:not(:disabled):active,
+input[type="submit"]:not(:disabled):active,
+input[type="reset"]:not(:disabled):active,
+[role="button"]:not([aria-disabled="true"]):active {
+  scale: 0.97;
+}
+
+button[data-aux-press-locked="true"],
+input[type="button"][data-aux-press-locked="true"],
+input[type="submit"][data-aux-press-locked="true"],
+input[type="reset"][data-aux-press-locked="true"],
+[role="button"][data-aux-press-locked="true"] {
+  opacity: 0.78;
+}
+
+button:disabled,
+input[type="button"]:disabled,
+input[type="submit"]:disabled,
+input[type="reset"]:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: default;
+}
+
+@media (hover: hover) {
+  button:not(:disabled):hover,
+  input[type="button"]:not(:disabled):hover,
+  input[type="submit"]:not(:disabled):hover,
+  input[type="reset"]:not(:disabled):hover,
+  [role="button"]:not([aria-disabled="true"]):hover {
+    filter: brightness(0.985);
+  }
+
+  html[data-theme="dark"]
+    button:not(:disabled):hover,
+  html[data-theme="dark"]
+    input[type="button"]:not(:disabled):hover,
+  html[data-theme="dark"]
+    input[type="submit"]:not(:disabled):hover,
+  html[data-theme="dark"]
+    input[type="reset"]:not(:disabled):hover,
+  html[data-theme="dark"]
+    [role="button"]:not([aria-disabled="true"]):hover {
+    filter: brightness(1.06);
+  }
+}
+
+@media (
+  prefers-reduced-motion:
+  reduce
+) {
+  button,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  [role="button"] {
+    transition: none;
+  }
+
+  button:not(:disabled):active,
+  input[type="button"]:not(:disabled):active,
+  input[type="submit"]:not(:disabled):active,
+  input[type="reset"]:not(:disabled):active,
+  [role="button"]:not([aria-disabled="true"]):active {
+    scale: 1;
+  }
+}
+/* =========================================
+   AUX — MEMORY CAROUSEL CONTROLS
+   ========================================= */
+
+.memoryCarousel {
+  position: relative;
+}
+
+.memoryArrow {
+  display: none;
+  position: absolute;
+  top: 50%;
+  z-index: 5;
+
+  width: 42px;
+  height: 42px;
+
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.24);
+
+  border-radius: 999px;
+
+  background:
+    rgba(18, 18, 18, 0.72);
+
+  color: #fff;
+
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  transform: translateY(-50%);
+
+  cursor: pointer;
+
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease,
+    background 160ms ease;
+}
+
+.memoryArrowLeft {
+  left: 20px;
+}
+
+.memoryArrowRight {
+  right: 20px;
+}
+
+.memoryArrow:hover {
+  background:
+    rgba(18, 18, 18, 0.88);
+
+  transform:
+    translateY(-50%)
+    scale(1.05);
+}
+
+.memoryArrow:disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dots button {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+@media (min-width: 761px) {
+  .memoryArrow {
+    display: flex;
+  }
+}
+
+@media (max-width: 760px) {
+  .memoryArrow {
+    display: none;
+  }
+}

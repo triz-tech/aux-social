@@ -19,6 +19,99 @@ const WHITE = "#ffffff";
 const SOFT_WHITE = "rgba(255,255,255,0.72)";
 const DIM_WHITE = "rgba(255,255,255,0.42)";
 
+
+type StorySubject = {
+  kind:
+    | "track"
+    | "album"
+    | "artist"
+    | "playlist";
+  title: string;
+  subtitle: string;
+  artworkUrl: string | null;
+};
+
+function storySubject(
+  post: Post
+): StorySubject {
+  if (
+    post.subject_kind ===
+      "album" &&
+    post.album
+  ) {
+    return {
+      kind: "album",
+      title:
+        post.album.title,
+      subtitle:
+        post.album.artist,
+      artworkUrl:
+        post.album.artwork_url,
+    };
+  }
+
+  if (
+    post.subject_kind ===
+      "artist" &&
+    post.artist
+  ) {
+    return {
+      kind: "artist",
+      title:
+        post.artist.name,
+      subtitle:
+        "Artista",
+      artworkUrl:
+        post.artist.artwork_url,
+    };
+  }
+
+  if (
+    post.subject_kind ===
+      "playlist" &&
+    post.playlist
+  ) {
+    return {
+      kind: "playlist",
+      title:
+        post.playlist.title,
+      subtitle:
+        post.playlist.owner_name ||
+        "Playlist",
+      artworkUrl:
+        post.playlist.artwork_url,
+    };
+  }
+
+  return {
+    kind: "track",
+    title:
+      post.track.title,
+    subtitle:
+      post.track.artist,
+    artworkUrl:
+      post.track.artwork_url,
+  };
+}
+
+function storySubjectLabel(
+  kind: StorySubject["kind"]
+) {
+  if (kind === "album") {
+    return "Álbum";
+  }
+
+  if (kind === "artist") {
+    return "Artista";
+  }
+
+  if (kind === "playlist") {
+    return "Playlist";
+  }
+
+  return "Música";
+}
+
 /*
  * =========================================================
  * IMAGE LOADER
@@ -486,8 +579,11 @@ async function drawReviewStory(
   ctx: CanvasRenderingContext2D,
   post: Post
 ) {
+  const subject =
+    storySubject(post);
+
   const artworkUrl =
-    post.track.artwork_url;
+    subject.artworkUrl;
 
   /*
    * ARTWORK
@@ -535,19 +631,38 @@ async function drawReviewStory(
 
   ctx.textAlign = "center";
 
+  if (
+    subject.kind !==
+    "track"
+  ) {
+    ctx.fillStyle =
+      "rgba(255,255,255,0.48)";
+
+    ctx.font =
+      "600 22px -apple-system, BlinkMacSystemFont, system-ui, sans-serif";
+
+    ctx.fillText(
+      storySubjectLabel(
+        subject.kind
+      ),
+      STORY_WIDTH / 2,
+      932
+    );
+  }
+
   ctx.fillStyle = WHITE;
 
   ctx.font =
     "700 48px -apple-system, BlinkMacSystemFont, system-ui, sans-serif";
 
   const title =
-    post.track.title.length >
+    subject.title.length >
     34
-      ? `${post.track.title.slice(
+      ? `${subject.title.slice(
           0,
           33
         )}…`
-      : post.track.title;
+      : subject.title;
 
   ctx.fillText(
     title,
@@ -562,13 +677,13 @@ async function drawReviewStory(
     "400 30px -apple-system, BlinkMacSystemFont, system-ui, sans-serif";
 
   const artist =
-    post.track.artist.length >
+    subject.subtitle.length >
     46
-      ? `${post.track.artist.slice(
+      ? `${subject.subtitle.slice(
           0,
           45
         )}…`
-      : post.track.artist;
+      : subject.subtitle;
 
   ctx.fillText(
     artist,
@@ -633,11 +748,14 @@ async function drawMemoryStory(
   ctx: CanvasRenderingContext2D,
   post: Post
 ) {
+  const subject =
+    storySubject(post);
+
   const photoUrl =
     post.media[0]?.public_url;
 
   const artworkUrl =
-    post.track.artwork_url;
+    subject.artworkUrl;
 
   /*
    * =====================================================
@@ -781,7 +899,11 @@ async function drawMemoryStory(
     "500 22px -apple-system, BlinkMacSystemFont, system-ui, sans-serif";
 
   ctx.fillText(
-    "♫  estava tocando",
+    subject.kind === "track"
+      ? "♫  estava tocando"
+      : `${storySubjectLabel(
+          subject.kind
+        )} · ficou com você`,
     textX,
     playerY + 48
   );
@@ -796,12 +918,12 @@ async function drawMemoryStory(
     "700 38px -apple-system, BlinkMacSystemFont, system-ui, sans-serif";
 
   const title =
-    post.track.title.length > 28
-      ? `${post.track.title.slice(
+    subject.title.length > 28
+      ? `${subject.title.slice(
           0,
           27
         )}…`
-      : post.track.title;
+      : subject.title;
 
   ctx.fillText(
     title,
@@ -820,12 +942,12 @@ async function drawMemoryStory(
     "400 27px -apple-system, BlinkMacSystemFont, system-ui, sans-serif";
 
   const artist =
-    post.track.artist.length > 38
-      ? `${post.track.artist.slice(
+    subject.subtitle.length > 38
+      ? `${subject.subtitle.slice(
           0,
           37
         )}…`
-      : post.track.artist;
+      : subject.subtitle;
 
   ctx.fillText(
     artist,
@@ -907,7 +1029,8 @@ export async function drawStoryPng(
 
   await drawAmbientBackground(
     ctx,
-    post.track.artwork_url
+    storySubject(post)
+      .artworkUrl
   );
 
   /*

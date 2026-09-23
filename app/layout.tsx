@@ -4,9 +4,11 @@ import type {
 } from "next";
 
 import "./globals.css";
-import InstallPrompt from "@/components/pwa/InstallPrompt";
 
+import InstallPrompt from "@/components/pwa/InstallPrompt";
+import InteractionGuard from "@/components/ui/InteractionGuard";
 import AppNavigation from "@/components/navigation/AppNavigation";
+import { getCurrentUser } from "@/lib/auth/current-user";
 
 import {
   APP_NAME,
@@ -62,30 +64,58 @@ export default async function RootLayout({
 }) {
   let signedIn = IS_DEMO;
 
+  let viewerId: string | null =
+    IS_DEMO ? "demo" : null;
+
+  let username: string | null =
+    IS_DEMO ? "demo" : null;
+
   if (!IS_DEMO) {
     try {
-      const supabase =
-        await createClient();
+const user =
+  await getCurrentUser();
 
-      const {
-        data: { user },
-      } =
-        await supabase.auth.getUser();
+const supabase =
+  await createClient();
 
       signedIn = !!user;
+
+      viewerId =
+        user?.id ?? null;
+
+      if (user) {
+        const {
+          data: profile,
+        } =
+          await supabase
+            .from("profiles")
+            .select("username")
+            .eq("id", user.id)
+            .maybeSingle();
+
+        username =
+          profile?.username ??
+          null;
+      }
     } catch {
       signedIn = false;
+      viewerId = null;
+      username = null;
     }
   }
 
   return (
     <html lang="pt-BR">
       <body>
-        <InstallPrompt />
+        <InteractionGuard />
+        <InstallPrompt signedIn={signedIn} />
+
         {children}
 
         <AppNavigation
           signedIn={signedIn}
+          viewerId={viewerId}
+          username={username}
         />
       </body>
     </html>

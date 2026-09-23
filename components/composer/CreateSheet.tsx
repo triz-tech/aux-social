@@ -1,7 +1,14 @@
 "use client";
 
-import { Link2, Mic2, Search, X } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import {
+  Mic2,
+  Search,
+  X,
+} from "lucide-react";
+import {
+  AnimatePresence,
+  motion,
+} from "motion/react";
 import { useRouter } from "next/navigation";
 
 export default function CreateSheet({
@@ -13,9 +20,9 @@ export default function CreateSheet({
 }) {
   const router = useRouter();
 
-  function go(mode: "listen" | "link" | "search") {
+  function go(path: string) {
     onClose();
-    router.push(`/new?mode=${mode}`);
+    router.push(path);
   }
 
   return (
@@ -27,7 +34,10 @@ export default function CreateSheet({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onMouseDown={(event) => {
-            if (event.currentTarget === event.target) {
+            if (
+              event.currentTarget ===
+              event.target
+            ) {
               onClose();
             }
           }}
@@ -50,54 +60,81 @@ export default function CreateSheet({
               aria-label="Fechar"
               onClick={onClose}
             >
-              <X size={22} strokeWidth={1.8} />
+              <X
+                size={22}
+                strokeWidth={1.8}
+              />
             </button>
 
             <div className="sheetHeader">
-              <div className="brand">aux.</div>
-              <p>Qual é a música?</p>
+              <div className="brand">
+                aux.
+              </div>
+
+              <p>
+                O que você quer
+                compartilhar?
+              </p>
             </div>
 
             <div className="createChoices">
               <button
                 className="choice"
-                onClick={() => go("listen")}
+                onClick={() =>
+                  go("/new")
+                }
               >
-                <span className="choiceIcon" aria-hidden="true">
-                  <Mic2 size={25} strokeWidth={1.8} />
+                <span
+                  className="choiceIcon"
+                  aria-hidden="true"
+                >
+                  <Search
+                    size={25}
+                    strokeWidth={1.8}
+                  />
                 </span>
 
                 <div className="choiceCopy">
-                  <strong>O que tá tocando?</strong>
-                  <span>ouve alguns segundos e tenta identificar</span>
+                  <strong>
+                    Buscar ou colar
+                  </strong>
+
+                  <span>
+                    música, álbum,
+                    artista, playlist
+                    ou link
+                  </span>
                 </div>
               </button>
 
               <button
                 className="choice"
-                onClick={() => go("link")}
+                onClick={() =>
+                  go(
+                    "/new?mode=listen"
+                  )
+                }
               >
-                <span className="choiceIcon" aria-hidden="true">
-                  <Link2 size={25} strokeWidth={1.8} />
+                <span
+                  className="choiceIcon"
+                  aria-hidden="true"
+                >
+                  <Mic2
+                    size={25}
+                    strokeWidth={1.8}
+                  />
                 </span>
 
                 <div className="choiceCopy">
-                  <strong>Colar link</strong>
-                  <span>Spotify, Apple Music, Deezer ou YouTube</span>
-                </div>
-              </button>
+                  <strong>
+                    O que tá tocando?
+                  </strong>
 
-              <button
-                className="choice"
-                onClick={() => go("search")}
-              >
-                <span className="choiceIcon" aria-hidden="true">
-                  <Search size={25} strokeWidth={1.8} />
-                </span>
-
-                <div className="choiceCopy">
-                  <strong>Buscar música</strong>
-                  <span>nome, artista ou álbum</span>
+                  <span>
+                    ouve alguns
+                    segundos e tenta
+                    identificar
+                  </span>
                 </div>
               </button>
             </div>

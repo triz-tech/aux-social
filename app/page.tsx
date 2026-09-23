@@ -24,52 +24,62 @@ export default async function Home({
 
   let signedIn = IS_DEMO;
 
-if (!IS_DEMO) {
-  try {
-    const supabase =
-      await createClient();
+  let viewerId: string | null =
+    IS_DEMO ? "demo" : null;
 
-    const {
-      data: { user },
-    } =
-      await supabase.auth.getUser();
+  if (!IS_DEMO) {
+    try {
+      const supabase =
+        await createClient();
 
-    signedIn = !!user;
+      const {
+        data: { user },
+      } =
+        await supabase.auth.getUser();
 
-    /*
-     * Tem sessão, mas ainda não
-     * terminou de montar o perfil.
-     */
-    if (user) {
-      const { data: profile } =
-        await supabase
-          .from("profiles")
-          .select("onboarding_completed")
-          .eq("id", user.id)
-          .maybeSingle();
+      signedIn = !!user;
+      viewerId =
+        user?.id ?? null;
 
-      if (!profile?.onboarding_completed) {
-        redirect("/onboarding");
+      /*
+       * Tem sessão, mas ainda não
+       * terminou de montar o perfil.
+       */
+      if (user) {
+        const { data: profile } =
+          await supabase
+            .from("profiles")
+            .select(
+              "onboarding_completed"
+            )
+            .eq("id", user.id)
+            .maybeSingle();
+
+        if (
+          !profile?.onboarding_completed
+        ) {
+          redirect("/onboarding");
+        }
       }
-    }
-  } catch (error) {
-    /*
-     * redirect() do Next funciona lançando
-     * internamente um erro especial.
-     * Portanto não podemos engoli-lo aqui.
-     */
-    if (
-      error instanceof Error &&
-      error.message.includes(
-        "NEXT_REDIRECT"
-      )
-    ) {
-      throw error;
-    }
+    } catch (error) {
+      /*
+       * redirect() do Next funciona lançando
+       * internamente um erro especial.
+       * Portanto não podemos engoli-lo aqui.
+       */
+      if (
+        error instanceof Error &&
+        error.message.includes(
+          "NEXT_REDIRECT"
+        )
+      ) {
+        throw error;
+      }
 
-    signedIn = false;
+      signedIn = false;
+      viewerId = null;
+    }
   }
-}
 
   /*
    * Visitante vê a apresentação do AUX.
@@ -171,6 +181,7 @@ if (!IS_DEMO) {
             <PostCard
               key={post.id}
               post={post}
+              viewerId={viewerId}
             />
           ))
         ) : (

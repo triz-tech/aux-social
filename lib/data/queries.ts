@@ -1,25 +1,19 @@
 import type {
+  Album,
+  Artist,
+  Playlist,
   Post,
   Profile,
   Track,
 } from "@/types";
 
+import { getCurrentUser } from "@/lib/auth/current-user";
+
 import { createClient } from "@/lib/supabase/server";
 
-type RawAlbum = {
-  id: string;
-  provider: Track["provider"];
-  provider_album_id: string | null;
-  title: string;
-  artist: string;
-  artwork_url: string | null;
-  source_url: string;
-  spotify_url?: string | null;
-  apple_music_url?: string | null;
-  deezer_url?: string | null;
-  release_date?: string | null;
-  total_tracks?: number | null;
-};
+type RawAlbum = Album;
+type RawArtist = Artist;
+type RawPlaylist = Playlist;
 
 type RawPost = {
   id: string;
@@ -33,10 +27,6 @@ type RawPost = {
     | Profile
     | Profile[];
 
-  /*
-   * Depois da migration, um post possui track OU album.
-   * Posts antigos continuam vindo com track normalmente.
-   */
   track:
     | Track
     | Track[]
@@ -47,13 +37,24 @@ type RawPost = {
     | RawAlbum[]
     | null;
 
+  artist:
+    | RawArtist
+    | RawArtist[]
+    | null;
+
+  playlist:
+    | RawPlaylist
+    | RawPlaylist[]
+    | null;
+
   post_media: Array<{
     id: string;
     storage_path: string;
     position: number;
     width: number | null;
     height: number | null;
-    aspect_ratio: number | null;
+    aspect_ratio:
+      number | null;
   }>;
 
   likes: Array<{
@@ -107,60 +108,101 @@ function oneOrNull<T>(
   return value;
 }
 
-/*
- * =========================================================
- * ÁLBUM -> SUBJECT COMPATÍVEL COM O POST ATUAL
- * =========================================================
- *
- * PostCard, Story Card e Profile ainda usam post.track como
- * o objeto visual da música. Nesta etapa fazemos um adapter:
- * um álbum vira esse mesmo formato APENAS para renderização.
- *
- * O banco continua correto: album_id aponta para public.albums.
- * Não criamos uma track falsa no Supabase.
- *
- * Na próxima etapa o Post ganhará subject_kind/album para a UI
- * conseguir escrever explicitamente "álbum".
- */
 function albumAsDisplayTrack(
   album: RawAlbum
 ): Track {
   return {
     id: album.id,
-
     provider:
       album.provider,
-
     provider_track_id:
       null,
-
     title:
       album.title,
-
     artist:
       album.artist,
-
     album:
       album.title,
-
     artwork_url:
       album.artwork_url,
-
     source_url:
       album.source_url,
-
     spotify_url:
       album.spotify_url ??
       null,
-
     apple_music_url:
       album.apple_music_url ??
       null,
-
     deezer_url:
       album.deezer_url ??
       null,
+    duration_ms:
+      null,
+  };
+}
 
+function artistAsDisplayTrack(
+  artist: RawArtist
+): Track {
+  return {
+    id: artist.id,
+    provider:
+      artist.provider,
+    provider_track_id:
+      null,
+    title:
+      artist.name,
+    artist:
+      artist.name,
+    album:
+      null,
+    artwork_url:
+      artist.artwork_url,
+    source_url:
+      artist.source_url,
+    spotify_url:
+      artist.spotify_url ??
+      null,
+    apple_music_url:
+      artist.apple_music_url ??
+      null,
+    deezer_url:
+      artist.deezer_url ??
+      null,
+    duration_ms:
+      null,
+  };
+}
+
+function playlistAsDisplayTrack(
+  playlist: RawPlaylist
+): Track {
+  return {
+    id: playlist.id,
+    provider:
+      playlist.provider,
+    provider_track_id:
+      null,
+    title:
+      playlist.title,
+    artist:
+      playlist.owner_name ||
+      "Playlist",
+    album:
+      null,
+    artwork_url:
+      playlist.artwork_url,
+    source_url:
+      playlist.source_url,
+    spotify_url:
+      playlist.spotify_url ??
+      null,
+    apple_music_url:
+      playlist.apple_music_url ??
+      null,
+    deezer_url:
+      playlist.deezer_url ??
+      null,
     duration_ms:
       null,
   };
@@ -170,8 +212,10 @@ function mapPosts(
   supabase: ServerClient,
   data: unknown,
   viewerState: ViewerState = {
-    liked: new Set<string>(),
-    reposted: new Set<string>(),
+    liked:
+      new Set<string>(),
+    reposted:
+      new Set<string>(),
   }
 ): Post[] {
   return (
@@ -186,7 +230,6 @@ function mapPosts(
         )
         .map((item) => ({
           ...item,
-
           public_url:
             supabase.storage
               .from(
@@ -207,72 +250,84 @@ function mapPosts(
         post.album
       );
 
-    /*
-     * A constraint posts_subject_exactly_one do banco garante
-     * que um dos dois exista. Mesmo assim validamos aqui para
-     * não mandar um post quebrado para a interface se houver
-     * algum dado legado inesperado.
-     */
+    const artist =
+      oneOrNull(
+        post.artist
+      );
+
+    const playlist =
+      oneOrNull(
+        post.playlist
+      );
+
     const displayTrack =
       track ??
       (album
         ? albumAsDisplayTrack(
             album
           )
-        : null);
+        : artist
+          ? artistAsDisplayTrack(
+              artist
+            )
+          : playlist
+            ? playlistAsDisplayTrack(
+                playlist
+              )
+            : null);
 
     if (!displayTrack) {
       throw new Error(
-        `Publicação ${post.id} está sem música ou álbum.`
+        `Publicação ${post.id} está sem assunto musical.`
       );
     }
 
+    const subjectKind =
+      album
+        ? "album"
+        : artist
+          ? "artist"
+          : playlist
+            ? "playlist"
+            : "track";
+
     return {
-      id: post.id,
-      type: post.type,
-      body: post.body,
-      rating: post.rating,
-      trend: post.trend,
+      id:
+        post.id,
+      type:
+        post.type,
+      body:
+        post.body,
+      rating:
+        post.rating,
+      trend:
+        post.trend,
       created_at:
         post.created_at,
-
       author:
         one(post.author),
-
-      /*
-       * Mantém o contrato atual do PostCard nesta etapa,
-       * mas agora também preserva qual é o subject real.
-       */
       track:
         displayTrack,
-
       subject_kind:
-        album
-          ? "album"
-          : "track",
-
+        subjectKind,
       album,
-
+      artist,
+      playlist,
       media,
-
       counts: {
         likes:
           post.likes?.[0]
             ?.count ?? 0,
-
         comments:
           post.comments?.[0]
             ?.count ?? 0,
-
         reposts:
           post.reposts?.[0]
             ?.count ?? 0,
-
         liked:
           viewerState
             .liked
             .has(post.id),
-
         reposted:
           viewerState
             .reposted
@@ -323,6 +378,33 @@ async function postQuery(
             apple_music_url,
             deezer_url,
             release_date,
+            total_tracks
+          ),
+
+          artist:artists!posts_artist_id_fkey(
+            id,
+            provider,
+            provider_artist_id,
+            name,
+            artwork_url,
+            source_url,
+            spotify_url,
+            apple_music_url,
+            deezer_url
+          ),
+
+          playlist:playlists!posts_playlist_id_fkey(
+            id,
+            provider,
+            provider_playlist_id,
+            title,
+            owner_name,
+            description,
+            artwork_url,
+            source_url,
+            spotify_url,
+            apple_music_url,
+            deezer_url,
             total_tracks
           ),
 
@@ -397,7 +479,6 @@ async function postQuery(
     ViewerState = {
       liked:
         new Set<string>(),
-
       reposted:
         new Set<string>(),
     };
@@ -405,7 +486,8 @@ async function postQuery(
   const {
     data: { user },
   } =
-    await supabase.auth.getUser();
+    await supabase.auth
+      .getUser();
 
   if (
     user &&
@@ -774,11 +856,7 @@ export async function getProfileSocial(
       count:
         following,
     },
-    {
-      data: {
-        user,
-      },
-    },
+    user,
   ] =
     await Promise.all([
       supabase
@@ -811,8 +889,7 @@ export async function getProfileSocial(
           userId
         ),
 
-      supabase.auth
-        .getUser(),
+      getCurrentUser(),
     ]);
 
   let isFollowing =

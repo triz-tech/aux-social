@@ -40,6 +40,11 @@ export default function Settings() {
   const [error, setError] =
     useState("");
 
+  const [userId, setUserId] =
+    useState<string | null>(
+      IS_DEMO ? "demo" : null
+    );
+
   /*
    * =====================================================
    * CARREGAR PERFIL
@@ -81,6 +86,8 @@ export default function Settings() {
         return;
       }
 
+      setUserId(user.id);
+
       const {
         data,
         error: profileError,
@@ -94,7 +101,7 @@ export default function Settings() {
             avatar_url
           `
         )
-        .eq("id", user.id)
+        .eq("id", userId)
         .single();
 
       if (profileError) {
@@ -231,12 +238,7 @@ export default function Settings() {
       const supabase =
         createClient();
 
-      const {
-        data: { user },
-      } =
-        await supabase.auth.getUser();
-
-      if (!user) {
+      if (!userId) {
         throw new Error(
           "Entre novamente."
         );
@@ -262,7 +264,7 @@ export default function Settings() {
           );
 
         const path =
-          `${user.id}/` +
+          `${userId}/` +
           `${crypto.randomUUID()}.` +
           `${extension}`;
 
@@ -316,7 +318,7 @@ export default function Settings() {
           avatar_url:
             nextAvatarUrl,
         })
-        .eq("id", user.id);
+        .eq("id", userId);
 
       if (profileError) {
         throw profileError;
@@ -612,7 +614,9 @@ export default function Settings() {
           cancelar
         </button>
 
-        <TopFiveEditor />
+        <TopFiveEditor
+          userId={userId}
+        />
 
         <div
           style={{

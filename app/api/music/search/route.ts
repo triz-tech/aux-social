@@ -1,4 +1,6 @@
-import { NextResponse } from "next/server";
+import {
+  NextResponse,
+} from "next/server";
 
 import {
   searchApple,
@@ -8,7 +10,31 @@ import {
 import {
   searchSpotify,
   searchSpotifyAlbums,
+  searchSpotifyArtists,
+  searchSpotifyPlaylists,
 } from "@/lib/music/spotify";
+
+type SearchType =
+  | "all"
+  | "track"
+  | "album"
+  | "artist"
+  | "playlist";
+
+function readType(
+  value: string | null
+): SearchType {
+  if (
+    value === "track" ||
+    value === "album" ||
+    value === "artist" ||
+    value === "playlist"
+  ) {
+    return value;
+  }
+
+  return "all";
+}
 
 export async function GET(
   req: Request
@@ -22,32 +48,42 @@ export async function GET(
       ?.trim() ?? "";
 
   const type =
-    url.searchParams.get(
-      "type"
-    ) === "album"
-      ? "album"
-      : "track";
+    readType(
+      url.searchParams.get(
+        "type"
+      )
+    );
 
   if (q.length < 2) {
-    return NextResponse.json(
-      type === "album"
-        ? { albums: [] }
-        : { tracks: [] }
-    );
+    return NextResponse.json({
+      tracks: [],
+      albums: [],
+      artists: [],
+      playlists: [],
+    });
   }
 
   try {
-    /*
-     * ==========================================
-     * ÁLBUNS
-     * ==========================================
-     *
-     * Novo fluxo opt-in:
-     * /api/music/search?q=...&type=album
-     *
-     * Nenhum consumidor antigo recebe álbuns
-     * sem pedir explicitamente.
-     */
+    if (type === "track") {
+      try {
+        return NextResponse.json({
+          tracks:
+            await searchSpotify(
+              q
+            ),
+          source: "spotify",
+        });
+      } catch {
+        return NextResponse.json({
+          tracks:
+            await searchApple(
+              q
+            ),
+          source: "apple",
+        });
+      }
+    }
+
     if (type === "album") {
       try {
         return NextResponse.json({
@@ -68,25 +104,68 @@ export async function GET(
       }
     }
 
+    if (type === "artist") {
+      return NextResponse.json({
+        artists:
+          await searchSpotifyArtists(
+            q
+          ),
+        source: "spotify",
+      });
+    }
+
+    if (type === "playlist") {
+      return NextResponse.json({
+        playlists:
+          await searchSpotifyPlaylists(
+            q
+          ),
+        source: "spotify",
+      });
+    }
+
     /*
-     * ==========================================
-     * MÚSICAS
-     * ==========================================
-     *
-     * Mantém exatamente o contrato anterior:
-     * /api/music/search?q=...
-     * continua retornando { tracks: [...] }.
+     * Busca universal usada pelo novo Composer.
+     * Spotify devolve os quatro tipos em paralelo.
      */
     try {
+      const [
+        tracks,
+        albums,
+        artists,
+        playlists,
+      ] = await Promise.all([
+        searchSpotify(q),
+        searchSpotifyAlbums(q),
+        searchSpotifyArtists(q),
+        searchSpotifyPlaylists(q),
+      ]);
+
       return NextResponse.json({
-        tracks:
-          await searchSpotify(q),
+        tracks,
+        albums,
+        artists,
+        playlists,
         source: "spotify",
       });
     } catch {
+      /*
+       * Se Spotify estiver indisponível, mantemos
+       * música + álbum usando o fallback Apple.
+       */
+      const [
+        tracks,
+        albums,
+      ] = await Promise.all([
+        searchApple(q),
+        searchAppleAlbums(q),
+      ]);
+
       return NextResponse.json({
-        tracks:
-          await searchApple(q),
+        tracks,
+        albums,
+        artists: [],
+        playlists: [],
         source: "apple",
       });
     }

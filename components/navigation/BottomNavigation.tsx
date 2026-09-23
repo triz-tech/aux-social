@@ -9,21 +9,48 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import CreateSheet from "@/components/composer/CreateSheet";
 import { IS_DEMO } from "@/lib/config";
 import { createClient } from "@/lib/supabase/client";
 
-export default function BottomNavigation() {
+export default function BottomNavigation({
+  viewerId,
+  username,
+}: {
+  viewerId: string | null;
+  username: string | null;
+}) {
   const pathname = usePathname();
-  const [createOpen, setCreateOpen] = useState(false);
-  const [profileHref, setProfileHref] = useState(
-    IS_DEMO ? "/u/demo" : "/login"
-  );
+
+  const [createOpen, setCreateOpen] =
+    useState(false);
 
   const [unreadCount, setUnreadCount] =
     useState(0);
+
+  const profileHref =
+    useMemo(() => {
+      if (IS_DEMO) {
+        return "/u/demo";
+      }
+
+      if (!viewerId) {
+        return "/login";
+      }
+
+      return username
+        ? `/u/${username}`
+        : "/onboarding";
+    }, [
+      viewerId,
+      username,
+    ]);
 
   /*
    * ======================================================
@@ -54,100 +81,43 @@ export default function BottomNavigation() {
       .dataset.theme = next;
   }, []);
 
-  useEffect(() => {
-    if (IS_DEMO) {
-      setProfileHref("/u/demo");
-      return;
-    }
-
-    let mounted = true;
-
-    async function loadMyProfile() {
-      try {
-        const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (!mounted) return;
-
-        if (!user) {
-          setProfileHref("/login");
-          return;
-        }
-
-        const { data: profile, error } = await supabase
-          .from("profiles")
-          .select("username")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        if (error) throw error;
-        if (!mounted) return;
-
-        setProfileHref(
-          profile?.username
-            ? `/u/${profile.username}`
-            : "/onboarding"
-        );
-      } catch {
-        if (mounted) setProfileHref("/login");
-      }
-    }
-
-    void loadMyProfile();
-
-    const supabase = createClient();
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
-      void loadMyProfile();
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
   /*
    * ======================================================
    * NOTIFICAÇÕES NÃO LIDAS
    * ======================================================
    *
-   * Mostra uma bolinha em Activity quando existe pelo
-   * menos uma notificação com read_at = null.
+   * viewerId já vem do servidor através do layout.
    *
-   * Ao entrar em Activity, marca as notificações como lidas.
-   * Também atualiza ao voltar para a aba/janela e em um
-   * intervalo curto, sem depender do Realtime do Supabase.
+   * Isso evita chamar auth.getUser() toda vez que:
+   * - a navegação monta;
+   * - a janela ganha foco;
+   * - o intervalo de atualização roda;
+   * - a rota muda.
    */
   useEffect(() => {
-    if (IS_DEMO) {
+    if (
+      IS_DEMO ||
+      !viewerId
+    ) {
       setUnreadCount(0);
       return;
     }
 
     let active = true;
-    const supabase = createClient();
+
+    const supabase =
+      createClient();
 
     async function refreshUnread() {
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (!active) return;
-
-        if (!user) {
-          setUnreadCount(0);
-          return;
-        }
-
         if (
-          pathname.startsWith("/activity")
+          pathname.startsWith(
+            "/activity"
+          )
         ) {
-          setUnreadCount(0);
+          if (active) {
+            setUnreadCount(0);
+          }
 
           await supabase
             .from("notifications")
@@ -157,9 +127,12 @@ export default function BottomNavigation() {
             })
             .eq(
               "recipient_id",
-              user.id
+              viewerId
             )
-            .is("read_at", null);
+            .is(
+              "read_at",
+              null
+            );
 
           return;
         }
@@ -167,17 +140,21 @@ export default function BottomNavigation() {
         const {
           count,
           error,
-        } = await supabase
-          .from("notifications")
-          .select("id", {
-            count: "exact",
-            head: true,
-          })
-          .eq(
-            "recipient_id",
-            user.id
-          )
-          .is("read_at", null);
+        } =
+          await supabase
+            .from("notifications")
+            .select("id", {
+              count: "exact",
+              head: true,
+            })
+            .eq(
+              "recipient_id",
+              viewerId
+            )
+            .is(
+              "read_at",
+              null
+            );
 
         if (error) {
           throw error;
@@ -212,7 +189,7 @@ export default function BottomNavigation() {
         () => {
           void refreshUnread();
         },
-        20_000
+        30_000
       );
 
     return () => {
@@ -227,48 +204,80 @@ export default function BottomNavigation() {
         interval
       );
     };
-  }, [pathname]);
+  }, [
+    pathname,
+    viewerId,
+  ]);
 
   return (
     <>
-      <nav className="bottomNav" aria-label="Navegação principal">
+      <nav
+        className="bottomNav"
+        aria-label="Navegação principal"
+      >
         <Link
-          className={`navItem ${pathname === "/" ? "active" : ""}`}
+          className={`navItem ${
+            pathname === "/"
+              ? "active"
+              : ""
+          }`}
           href="/"
         >
-          <Home size={21} strokeWidth={1.8} />
+          <Home
+            size={21}
+            strokeWidth={1.8}
+          />
           <span>Home</span>
         </Link>
 
         <Link
           className={`navItem ${
-            pathname.startsWith("/discover") ? "active" : ""
+            pathname.startsWith(
+              "/discover"
+            )
+              ? "active"
+              : ""
           }`}
           href="/discover"
         >
-          <Compass size={21} strokeWidth={1.8} />
+          <Compass
+            size={21}
+            strokeWidth={1.8}
+          />
           <span>Discover</span>
         </Link>
 
         <button
           className="createBtn"
           aria-label="Adicionar música"
-          onClick={() => setCreateOpen(true)}
+          onClick={() =>
+            setCreateOpen(true)
+          }
         >
-          <Plus size={30} strokeWidth={1.8} />
+          <Plus
+            size={30}
+            strokeWidth={1.8}
+          />
         </button>
 
         <Link
           className={`navItem ${
-            pathname.startsWith("/activity") ? "active" : ""
+            pathname.startsWith(
+              "/activity"
+            )
+              ? "active"
+              : ""
           }`}
           href="/activity"
         >
           <span
             style={{
-              position: "relative",
-              display: "inline-grid",
-              placeItems: "center",
+              position:
+                "relative",
+              display:
+                "inline-grid",
+              placeItems:
+                "center",
             }}
           >
             <Activity
@@ -276,7 +285,8 @@ export default function BottomNavigation() {
               strokeWidth={1.8}
             />
 
-            {unreadCount > 0 && (
+            {unreadCount >
+              0 && (
               <span
                 aria-label={`${unreadCount} notificações não lidas`}
                 title={`${unreadCount} notificações não lidas`}
@@ -298,24 +308,36 @@ export default function BottomNavigation() {
             )}
           </span>
 
-          <span>Activity</span>
+          <span>
+            Activity
+          </span>
         </Link>
 
         <Link
           className={`navItem ${
-            pathname.startsWith("/u/") ? "active" : ""
+            pathname.startsWith(
+              "/u/"
+            )
+              ? "active"
+              : ""
           }`}
           href={profileHref}
         >
-          <UserRound size={21} strokeWidth={1.8} />
-          <span>Profile</span>
+          <UserRound
+            size={21}
+            strokeWidth={1.8}
+          />
+          <span>
+            Profile
+          </span>
         </Link>
-
       </nav>
 
       <CreateSheet
         open={createOpen}
-        onClose={() => setCreateOpen(false)}
+        onClose={() =>
+          setCreateOpen(false)
+        }
       />
     </>
   );

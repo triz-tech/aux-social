@@ -75,7 +75,11 @@ function trackKey(
   ].join(":");
 }
 
-export default function TopFiveEditor() {
+export default function TopFiveEditor({
+  userId,
+}: {
+  userId: string | null;
+}) {
   const [tracks, setTracks] =
     useState<TopTrack[]>([]);
 
@@ -101,8 +105,13 @@ export default function TopFiveEditor() {
     useState("");
 
   useEffect(() => {
-    void load();
-  }, []);
+    if (
+      IS_DEMO ||
+      userId
+    ) {
+      void load();
+    }
+  }, [userId]);
 
   async function load() {
     setLoading(true);
@@ -124,17 +133,12 @@ export default function TopFiveEditor() {
         return;
       }
 
-      const supabase =
-        createClient();
-
-      const {
-        data: { user },
-      } =
-        await supabase.auth.getUser();
-
-      if (!user) {
+      if (!userId) {
         return;
       }
+
+      const supabase =
+        createClient();
 
       const {
         data,
@@ -162,7 +166,7 @@ export default function TopFiveEditor() {
             )
           `
         )
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .order(
           "position",
           {
@@ -555,19 +559,14 @@ export default function TopFiveEditor() {
         return;
       }
 
-      const supabase =
-        createClient();
-
-      const {
-        data: { user },
-      } =
-        await supabase.auth.getUser();
-
-      if (!user) {
+      if (!userId) {
         throw new Error(
           "entre novamente."
         );
       }
+
+      const supabase =
+        createClient();
 
       const ids: string[] =
         [];
@@ -592,7 +591,7 @@ export default function TopFiveEditor() {
         .delete()
         .eq(
           "user_id",
-          user.id
+          userId
         );
 
       if (deleteError) {
@@ -613,7 +612,7 @@ export default function TopFiveEditor() {
                 index
               ) => ({
                 user_id:
-                  user.id,
+                  userId,
                 track_id:
                   trackId,
                 position:

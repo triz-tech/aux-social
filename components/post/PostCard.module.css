@@ -230,15 +230,37 @@
    * Isso dá o efeito "produto Apple": card grande,
    * conteúdo visual levemente encaixado.
    */
-  .post :global(.artwork),
-  .post :global(.memoryViewport) {
-    width: calc(100% - 20px);
-    margin-left: 10px;
-    margin-right: 10px;
+ .post :global(.artwork) {
+  width: calc(100% - 20px);
+  margin-left: 10px;
+  margin-right: 10px;
 
-    border-radius: 22px;
-    overflow: hidden;
-  }
+  border-radius: 22px;
+  overflow: hidden;
+}
+
+.post :global(.memoryViewport) {
+  width: calc(100% - 20px);
+  margin-left: 10px;
+  margin-right: 10px;
+
+  border-radius: 22px;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+
+  scrollbar-width: none;
+}
+
+.post :global(.memoryViewport)::-webkit-scrollbar {
+  display: none;
+}
 
   /*
    * A capa de Review fica um pouco mais contida,

@@ -30,9 +30,11 @@ import ShareSheet from "@/components/share/ShareSheet";
 
 export default function PostActions({
   post,
+  viewerId,
   onEdit,
 }: {
   post: Post;
+  viewerId?: string | null;
   onEdit?: () => void;
 }) {
   const router = useRouter();
@@ -93,7 +95,13 @@ export default function PostActions({
     useState(false);
 
   const [isOwnPost, setIsOwnPost] =
-    useState(false);
+    useState(
+      Boolean(
+        viewerId &&
+          viewerId ===
+            post.author.id
+      )
+    );
 
   const [menuOpen, setMenuOpen] =
     useState(false);
@@ -130,7 +138,23 @@ export default function PostActions({
    */
 
   useEffect(() => {
-    if (IS_DEMO) return;
+    /*
+     * No feed principal o viewerId já vem
+     * do servidor. Isso elimina uma chamada
+     * /auth/v1/user para cada post.
+     */
+    if (viewerId) {
+      setIsOwnPost(
+        viewerId ===
+          post.author.id
+      );
+      return;
+    }
+
+    if (IS_DEMO) {
+      setIsOwnPost(false);
+      return;
+    }
 
     let active = true;
 
@@ -157,7 +181,30 @@ export default function PostActions({
     return () => {
       active = false;
     };
-  }, [post.author.id]);
+  }, [
+    viewerId,
+    post.author.id,
+  ]);
+
+  async function getViewerId() {
+    if (viewerId) {
+      return viewerId;
+    }
+
+    if (IS_DEMO) {
+      return "demo";
+    }
+
+    const supabase =
+      createClient();
+
+    const {
+      data: { user },
+    } =
+      await supabase.auth.getUser();
+
+    return user?.id ?? null;
+  }
 
   function flashFeedback(
     message: string
@@ -224,12 +271,10 @@ export default function PostActions({
       const supabase =
         createClient();
 
-      const {
-        data: { user },
-      } =
-        await supabase.auth.getUser();
+      const currentViewerId =
+        await getViewerId();
 
-      if (!user) {
+      if (!currentViewerId) {
         /*
          * Como a ação foi otimista, volta o estado antes
          * de mandar a pessoa para o login.
@@ -265,14 +310,14 @@ export default function PostActions({
               )
               .eq(
                 "user_id",
-                user.id
+                currentViewerId
               )
           : await query.insert({
               post_id:
                 post.id,
 
               user_id:
-                user.id,
+                currentViewerId,
             });
 
       if (error) {
@@ -357,12 +402,10 @@ export default function PostActions({
       const supabase =
         createClient();
 
-      const {
-        data: { user },
-      } =
-        await supabase.auth.getUser();
+      const currentViewerId =
+        await getViewerId();
 
-      if (!user) {
+      if (!currentViewerId) {
         setReposted(before);
 
         setReposts(
@@ -385,7 +428,7 @@ export default function PostActions({
       }
 
       if (
-        user.id ===
+        currentViewerId ===
         post.author.id
       ) {
         setReposted(before);
@@ -419,14 +462,14 @@ export default function PostActions({
               )
               .eq(
                 "user_id",
-                user.id
+                currentViewerId
               )
           : await query.insert({
               post_id:
                 post.id,
 
               user_id:
-                user.id,
+                currentViewerId,
             });
 
       if (error) {
@@ -478,12 +521,10 @@ export default function PostActions({
       const supabase =
         createClient();
 
-      const {
-        data: { user },
-      } =
-        await supabase.auth.getUser();
+      const currentViewerId =
+        await getViewerId();
 
-      if (!user) {
+      if (!currentViewerId) {
         location.href =
           `/login?next=${encodeURIComponent(
             location.pathname
@@ -497,7 +538,7 @@ export default function PostActions({
        */
 
       if (
-        user.id !==
+        currentViewerId !==
         post.author.id
       ) {
         throw new Error(
@@ -542,7 +583,7 @@ export default function PostActions({
           )
           .eq(
             "user_id",
-            user.id
+            currentViewerId
           );
 
       if (postError) {

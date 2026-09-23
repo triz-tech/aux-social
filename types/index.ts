@@ -58,49 +58,30 @@ export interface ResolvedTrack
   >;
 }
 
-/* =========================================================
-   ALBUMS
-   Usados pela feature de Review de álbum.
-
-   Ainda não alteramos Post aqui. Os componentes atuais
-   continuam recebendo post.track normalmente até a etapa
-   em que Composer + PostCard forem atualizados juntos.
-   ========================================================= */
-
 export interface Album {
   id: string;
-
   provider: MusicProvider;
-
   provider_album_id:
     | string
     | null;
-
   title: string;
   artist: string;
-
   artwork_url:
     | string
     | null;
-
   source_url: string;
-
   spotify_url?:
     | string
     | null;
-
   apple_music_url?:
     | string
     | null;
-
   deezer_url?:
     | string
     | null;
-
   release_date?:
     | string
     | null;
-
   total_tracks?:
     | number
     | null;
@@ -108,6 +89,65 @@ export interface Album {
 
 export interface ResolvedAlbum
   extends Omit<Album, "id"> {}
+
+export interface Artist {
+  id: string;
+  provider: MusicProvider;
+  provider_artist_id:
+    | string
+    | null;
+  name: string;
+  artwork_url:
+    | string
+    | null;
+  source_url: string;
+  spotify_url?:
+    | string
+    | null;
+  apple_music_url?:
+    | string
+    | null;
+  deezer_url?:
+    | string
+    | null;
+}
+
+export interface ResolvedArtist
+  extends Omit<Artist, "id"> {}
+
+export interface Playlist {
+  id: string;
+  provider: MusicProvider;
+  provider_playlist_id:
+    | string
+    | null;
+  title: string;
+  owner_name:
+    | string
+    | null;
+  description:
+    | string
+    | null;
+  artwork_url:
+    | string
+    | null;
+  source_url: string;
+  spotify_url?:
+    | string
+    | null;
+  apple_music_url?:
+    | string
+    | null;
+  deezer_url?:
+    | string
+    | null;
+  total_tracks?:
+    | number
+    | null;
+}
+
+export interface ResolvedPlaylist
+  extends Omit<Playlist, "id"> {}
 
 export interface PostMedia {
   id: string;
@@ -131,7 +171,9 @@ export interface SocialCounts {
 
 export type PostSubjectKind =
   | "track"
-  | "album";
+  | "album"
+  | "artist"
+  | "playlist";
 
 export interface Post {
   id: string;
@@ -143,26 +185,25 @@ export interface Post {
   author: Profile;
 
   /*
-   * Compatibilidade:
-   * track continua obrigatório por enquanto porque vários
-   * componentes atuais ainda usam post.track diretamente.
-   *
-   * Para Review de álbum, a camada de queries entrega aqui
-   * um adapter visual do álbum. O objeto real fica em album.
+   * Compatibilidade temporária:
+   * vários componentes ainda renderizam post.track.
+   * Para album/artist/playlist a camada de queries pode
+   * entregar um adapter visual aqui até migrarmos tudo.
    */
   track: Track;
 
-  /*
-   * Novo sinal explícito para a UI saber se a Review é
-   * de uma música ou de um álbum.
-   *
-   * Opcional temporariamente para que demoPosts e qualquer
-   * objeto antigo continuem válidos durante a migração.
-   */
   subject_kind?: PostSubjectKind;
 
   album?:
     | Album
+    | null;
+
+  artist?:
+    | Artist
+    | null;
+
+  playlist?:
+    | Playlist
     | null;
 
   media: PostMedia[];
