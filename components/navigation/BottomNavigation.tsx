@@ -1,5 +1,7 @@
 "use client";
 
+import dynamic from "next/dynamic";
+
 import {
   Activity,
   Compass,
@@ -11,11 +13,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   useEffect,
-  useMemo,
   useState,
 } from "react";
 
-import CreateSheet from "@/components/composer/CreateSheet";
+const CreateSheet = dynamic(
+  () =>
+    import(
+      "@/components/composer/CreateSheet"
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
 import { IS_DEMO } from "@/lib/config";
 import { createClient } from "@/lib/supabase/client";
 
@@ -34,24 +44,14 @@ export default function BottomNavigation({
   const [unreadCount, setUnreadCount] =
     useState(0);
 
-  const profileHref =
-    useMemo(() => {
-      if (IS_DEMO) {
-        return "/u/demo";
-      }
-
-      if (!viewerId) {
-        return "/login";
-      }
-
-      return username
+const profileHref =
+  IS_DEMO
+    ? "/u/demo"
+    : !viewerId
+      ? "/login"
+      : username
         ? `/u/${username}`
         : "/onboarding";
-    }, [
-      viewerId,
-      username,
-    ]);
-
   /*
    * ======================================================
    * TEMA
@@ -189,7 +189,7 @@ export default function BottomNavigation({
         () => {
           void refreshUnread();
         },
-        30_000
+        120_000
       );
 
     return () => {
@@ -333,12 +333,14 @@ export default function BottomNavigation({
         </Link>
       </nav>
 
-      <CreateSheet
-        open={createOpen}
-        onClose={() =>
-          setCreateOpen(false)
-        }
-      />
+{createOpen && (
+  <CreateSheet
+    open
+    onClose={() =>
+      setCreateOpen(false)
+    }
+  />
+)}
     </>
   );
 }
