@@ -22,6 +22,16 @@ export default function Settings() {
     useState("");
   const [bio, setBio] = useState("");
 
+  const [
+    emailUpdatesOptIn,
+    setEmailUpdatesOptIn,
+  ] = useState(false);
+
+  const [
+    emailUpdatesOptInAt,
+    setEmailUpdatesOptInAt,
+  ] = useState<string | null>(null);
+
   const [avatarUrl, setAvatarUrl] =
     useState<string | null>(null);
 
@@ -114,7 +124,9 @@ const [
             display_name,
             username,
             bio,
-            avatar_url
+            avatar_url,
+            email_updates_opt_in,
+            email_updates_opt_in_at
           `
         )
         .eq("id", user.id)
@@ -138,6 +150,17 @@ const [
 
       setAvatarUrl(
         data.avatar_url ?? null
+      );
+
+      setEmailUpdatesOptIn(
+        Boolean(
+          data.email_updates_opt_in
+        )
+      );
+
+      setEmailUpdatesOptInAt(
+        data.email_updates_opt_in_at ??
+          null
       );
     } catch (err) {
       setError(
@@ -301,6 +324,12 @@ function chooseAvatar(
        * Atualiza o profile.
        */
 
+      const nextEmailUpdatesOptInAt =
+        emailUpdatesOptIn
+          ? emailUpdatesOptInAt ??
+            new Date().toISOString()
+          : null;
+
       const {
         error: profileError,
       } = await supabase
@@ -318,6 +347,12 @@ function chooseAvatar(
 
           avatar_url:
             nextAvatarUrl,
+
+          email_updates_opt_in:
+            emailUpdatesOptIn,
+
+          email_updates_opt_in_at:
+            nextEmailUpdatesOptInAt,
         })
         .eq("id", userId);
 
@@ -331,6 +366,10 @@ function chooseAvatar(
 
       setNewAvatar(null);
       setAvatarPreview(null);
+
+      setEmailUpdatesOptInAt(
+        nextEmailUpdatesOptInAt
+      );
 
       setMsg("perfil salvo.");
 
@@ -735,6 +774,75 @@ function chooseAvatar(
           >
             {bio.length}/180
           </div>
+        </label>
+
+        <label
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 10,
+            padding: "14px 0 4px",
+            cursor: "pointer",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={
+              emailUpdatesOptIn
+            }
+            onChange={(event) => {
+              setEmailUpdatesOptIn(
+                event.target.checked
+              );
+
+              if (
+                !event.target.checked
+              ) {
+                setEmailUpdatesOptInAt(
+                  null
+                );
+              }
+            }}
+            style={{
+              width: 17,
+              height: 17,
+              marginTop: 2,
+              accentColor:
+                "var(--ink)",
+              flexShrink: 0,
+            }}
+          />
+
+          <span
+            style={{
+              display: "grid",
+              gap: 3,
+            }}
+          >
+            <strong
+              style={{
+                fontSize: 13,
+                fontWeight: 650,
+                lineHeight: 1.35,
+              }}
+            >
+              quero receber novidades
+              do AUX por e-mail
+            </strong>
+
+            <span
+              className="subtle"
+              style={{
+                fontSize: 12,
+                lineHeight: 1.45,
+              }}
+            >
+              atualizações do site,
+              novidades e convites
+              para testar coisas novas.
+              opcional.
+            </span>
+          </span>
         </label>
 
         {error && (

@@ -41,6 +41,11 @@ export default function Onboarding() {
   const [bio, setBio] =
     useState("");
 
+  const [
+    emailUpdatesOptIn,
+    setEmailUpdatesOptIn,
+  ] = useState(false);
+
   const [avatar, setAvatar] =
     useState<File | null>(null);
 
@@ -421,6 +426,12 @@ export default function Onboarding() {
 
             avatar_url,
             onboarding_completed: true,
+            email_updates_opt_in:
+              emailUpdatesOptIn,
+            email_updates_opt_in_at:
+              emailUpdatesOptIn
+                ? new Date().toISOString()
+                : null,
           })
           .eq(
             "id",
@@ -765,6 +776,67 @@ export default function Onboarding() {
 
             <span className="onboardingCount">
               {bio.length}/180
+            </span>
+          </label>
+
+          <label
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 10,
+              padding: "14px 0 2px",
+              cursor: "pointer",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={
+                emailUpdatesOptIn
+              }
+              onChange={(event) =>
+                setEmailUpdatesOptIn(
+                  event.target.checked
+                )
+              }
+              style={{
+                width: 17,
+                height: 17,
+                marginTop: 2,
+                accentColor:
+                  "var(--ink)",
+                flexShrink: 0,
+              }}
+            />
+
+            <span
+              style={{
+                display: "grid",
+                gap: 3,
+              }}
+            >
+              <strong
+                style={{
+                  fontSize: 13,
+                  fontWeight: 650,
+                  lineHeight: 1.35,
+                }}
+              >
+                quero receber novidades
+                do AUX por e-mail
+              </strong>
+
+              <span
+                className="subtle"
+                style={{
+                  fontSize: 12,
+                  lineHeight: 1.45,
+                }}
+              >
+                atualizações do site,
+                novidades e convites
+                para testar coisas novas.
+                opcional.
+              </span>
             </span>
           </label>
 
