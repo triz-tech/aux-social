@@ -339,7 +339,8 @@ function mapPosts(
 
 async function postQuery(
   userIds?: string[],
-  postIds?: string[]
+  postIds?: string[],
+  viewerId?: string | null
 ) {
   const supabase =
     await createClient();
@@ -432,7 +433,7 @@ async function postQuery(
           ascending: false,
         }
       )
-      .limit(40);
+      .limit(20);
 
   if (userIds) {
     query =
@@ -483,16 +484,17 @@ async function postQuery(
         new Set<string>(),
     };
 
-  const {
-    data: { user },
-  } =
-    await supabase.auth
-      .getUser();
+const effectiveViewerId =
+  viewerId === undefined
+    ? (
+        await supabase.auth.getUser()
+      ).data.user?.id ?? null
+    : viewerId;
 
-  if (
-    user &&
-    ids.length
-  ) {
+if (
+  effectiveViewerId &&
+  ids.length
+) {
     const [
       likesResult,
       repostsResult,
@@ -500,10 +502,10 @@ async function postQuery(
       supabase
         .from("likes")
         .select("post_id")
-        .eq(
-          "user_id",
-          user.id
-        )
+.eq(
+  "user_id",
+  effectiveViewerId
+)
         .in(
           "post_id",
           ids
@@ -514,7 +516,7 @@ async function postQuery(
         .select("post_id")
         .eq(
           "user_id",
-          user.id
+          effectiveViewerId
         )
         .in(
           "post_id",
@@ -555,7 +557,8 @@ async function postQuery(
 }
 
 export async function getFeed(
-  following = false
+  following = false,
+  viewerId: string | null = null
 ): Promise<Post[]> {
   let ids:
     | string[]
@@ -573,18 +576,13 @@ export async function getFeed(
    * A ordenação já acontece dentro de postQuery:
    * .order("created_at", { ascending: false })
    */
-  if (following) {
-    const supabase =
-      await createClient();
+if (following) {
+  if (!viewerId) {
+    return [];
+  }
 
-    const {
-      data: { user },
-    } =
-      await supabase.auth.getUser();
-
-    if (!user) {
-      return [];
-    }
+  const supabase =
+    await createClient();
 
     const {
       data,
@@ -594,10 +592,10 @@ export async function getFeed(
         .select(
           "following_id"
         )
-        .eq(
-          "follower_id",
-          user.id
-        );
+.eq(
+  "follower_id",
+  viewerId
+);
 
     ids =
       (data ?? []).map(
@@ -611,11 +609,13 @@ export async function getFeed(
     data,
     viewerState,
   } =
-    await postQuery(
-      following
-        ? ids
-        : undefined
-    );
+await postQuery(
+  following
+    ? ids
+    : undefined,
+  undefined,
+  viewerId
+);
 
   return mapPosts(
     supabase,

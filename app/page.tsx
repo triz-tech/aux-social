@@ -7,7 +7,7 @@ import PostCard from "@/components/post/PostCard";
 import { IS_DEMO } from "@/lib/config";
 import { demoPosts } from "@/lib/data/demo";
 import { getFeed } from "@/lib/data/queries";
-import { createClient } from "@/lib/supabase/server";
+import { getViewer } from "@/lib/auth/viewer";
 
 export default async function Home({
   searchParams,
@@ -22,72 +22,24 @@ export default async function Home({
    * =====================================================
    */
 
-  let signedIn = IS_DEMO;
+ const viewer =
+  await getViewer();
 
-  let viewerId: string | null =
-    IS_DEMO ? "demo" : null;
+if (
+  viewer.signedIn &&
+  !viewer.onboardingCompleted
+) {
+  redirect("/onboarding");
+}
 
-  if (!IS_DEMO) {
-    try {
-      const supabase =
-        await createClient();
-
-      const {
-        data: { user },
-      } =
-        await supabase.auth.getUser();
-
-      signedIn = !!user;
-      viewerId =
-        user?.id ?? null;
-
-      /*
-       * Tem sessão, mas ainda não
-       * terminou de montar o perfil.
-       */
-      if (user) {
-        const { data: profile } =
-          await supabase
-            .from("profiles")
-            .select(
-              "onboarding_completed"
-            )
-            .eq("id", user.id)
-            .maybeSingle();
-
-        if (
-          !profile?.onboarding_completed
-        ) {
-          redirect("/onboarding");
-        }
-      }
-    } catch (error) {
-      /*
-       * redirect() do Next funciona lançando
-       * internamente um erro especial.
-       * Portanto não podemos engoli-lo aqui.
-       */
-      if (
-        error instanceof Error &&
-        error.message.includes(
-          "NEXT_REDIRECT"
-        )
-      ) {
-        throw error;
-      }
-
-      signedIn = false;
-      viewerId = null;
-    }
-  }
-
+if (!viewer.signedIn) {
+  return <LandingPage />;
+}
   /*
    * Visitante vê a apresentação do AUX.
    */
 
-  if (!signedIn) {
-    return <LandingPage />;
-  }
+
 
   /*
    * =====================================================
@@ -181,7 +133,7 @@ export default async function Home({
             <PostCard
               key={post.id}
               post={post}
-              viewerId={viewerId}
+              viewerId={viewer.id}
             />
           ))
         ) : (

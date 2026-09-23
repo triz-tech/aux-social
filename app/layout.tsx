@@ -10,14 +10,14 @@ import "./globals.css";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 import InteractionGuard from "@/components/ui/InteractionGuard";
 import AppNavigation from "@/components/navigation/AppNavigation";
-import { getCurrentUser } from "@/lib/auth/current-user";
+
 
 import {
   APP_NAME,
   IS_DEMO,
 } from "@/lib/config";
 
-import { createClient } from "@/lib/supabase/server";
+import { getViewer } from "@/lib/auth/viewer";
 
 export const metadata: Metadata = {
   title: {
@@ -64,62 +64,25 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  let signedIn = IS_DEMO;
-
-  let viewerId: string | null =
-    IS_DEMO ? "demo" : null;
-
-  let username: string | null =
-    IS_DEMO ? "demo" : null;
-
-  if (!IS_DEMO) {
-    try {
-const user =
-  await getCurrentUser();
-
-const supabase =
-  await createClient();
-
-      signedIn = !!user;
-
-      viewerId =
-        user?.id ?? null;
-
-      if (user) {
-        const {
-          data: profile,
-        } =
-          await supabase
-            .from("profiles")
-            .select("username")
-            .eq("id", user.id)
-            .maybeSingle();
-
-        username =
-          profile?.username ??
-          null;
-      }
-    } catch {
-      signedIn = false;
-      viewerId = null;
-      username = null;
-    }
-  }
+  const viewer =
+  await getViewer();
 
   return (
     <html lang="pt-BR">
       <body>
         <SpeedInsights />
         <InteractionGuard />
-        <InstallPrompt signedIn={signedIn} />
+        <InstallPrompt
+  signedIn={viewer.signedIn}
+/>
 
         {children}
 
-        <AppNavigation
-          signedIn={signedIn}
-          viewerId={viewerId}
-          username={username}
-        />
+<AppNavigation
+  signedIn={viewer.signedIn}
+  viewerId={viewer.id}
+  username={viewer.username}
+/>
       </body>
     </html>
   );
