@@ -101,7 +101,7 @@ export default function Settings() {
             avatar_url
           `
         )
-        .eq("id", userId)
+        .eq("id", user.id)
         .single();
 
       if (profileError) {
