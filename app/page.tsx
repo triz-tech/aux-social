@@ -6,7 +6,10 @@ import PostCard from "@/components/post/PostCard";
 
 import { IS_DEMO } from "@/lib/config";
 import { demoPosts } from "@/lib/data/demo";
-import { getFeed } from "@/lib/data/queries";
+import {
+  getFeed,
+  getTrendingFeed,
+} from "@/lib/data/queries";
 import { getViewer } from "@/lib/auth/viewer";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 
@@ -48,22 +51,32 @@ if (!viewer.signedIn) {
    * =====================================================
    */
 
-  const { tab } =
-    await searchParams;
+const { tab } =
+  await searchParams;
 
-  const following =
-    tab === "following";
+const following =
+  tab === "following";
+
+const trending =
+  tab === "trending";
 
   let posts = demoPosts;
   let error = "";
 
   if (!IS_DEMO) {
     try {
-posts =
-  await getFeed(
-    following,
-    viewer.id
-  );
+if (trending) {
+  posts =
+    await getTrendingFeed(
+      viewer.id
+    );
+} else {
+  posts =
+    await getFeed(
+      following,
+      viewer.id
+    );
+}
     } catch (err) {
       posts = [];
 
@@ -103,29 +116,39 @@ posts =
       </section>
 
       <div className="tabs">
-        <Link
-          className={`tab ${
-            !following
-              ? "active"
-              : ""
-          }`}
-          href="/"
-        >
-          Para você
-        </Link>
+  <Link
+    className={`tab ${
+      !following && !trending
+        ? "active"
+        : ""
+    }`}
+    href="/"
+  >
+    Para você
+  </Link>
 
-        <Link
-          className={`tab ${
-            following
-              ? "active"
-              : ""
-          }`}
-          href="/?tab=following"
-        >
-          Seguindo
-        </Link>
-      </div>
+  <Link
+    className={`tab ${
+      following
+        ? "active"
+        : ""
+    }`}
+    href="/?tab=following"
+  >
+    Seguindo
+  </Link>
 
+  <Link
+    className={`tab ${
+      trending
+        ? "active"
+        : ""
+    }`}
+    href="/?tab=trending"
+  >
+    Em alta
+  </Link>
+</div>
       {error && (
         <div className="error">
           {error}

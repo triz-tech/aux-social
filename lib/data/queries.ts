@@ -340,7 +340,11 @@ function mapPosts(
 async function postQuery(
   userIds?: string[],
   postIds?: string[],
-  viewerId?: string | null
+  viewerId?: string | null,
+  options?: {
+    createdAfter?: string;
+    limit?: number;
+  }
 ) {
   const supabase =
     await createClient();
@@ -433,7 +437,14 @@ async function postQuery(
           ascending: false,
         }
       )
-      .limit(20);
+      .limit(options?.limit ?? 20);
+
+      if (options?.createdAfter) {
+  query = query.gte(
+    "created_at",
+    options.createdAfter
+  );
+}
 
   if (userIds) {
     query =
@@ -622,6 +633,90 @@ await postQuery(
     data,
     viewerState
   );
+}
+
+export async function getTrendingFeed(
+  viewerId: string | null
+): Promise<Post[]> {
+  const sevenDaysAgo =
+    new Date(
+      Date.now() -
+        7 * 24 * 60 * 60 * 1000
+    ).toISOString();
+
+  const {
+    supabase,
+    data,
+    viewerState,
+  } = await postQuery(
+    undefined,
+    undefined,
+    viewerId,
+    {
+      createdAfter: sevenDaysAgo,
+      limit: 60,
+    }
+  );
+
+  const posts = mapPosts(
+    supabase,
+    data,
+    viewerState
+  );
+
+  function score(post: Post) {
+    const likes =
+      post.counts.likes ?? 0;
+
+    const comments =
+      post.counts.comments ?? 0;
+
+    const reposts =
+      post.counts.reposts ?? 0;
+
+    const engagement =
+      likes +
+      comments * 2 +
+      reposts * 3;
+
+    const ageHours =
+      Math.max(
+        1,
+        (
+          Date.now() -
+          new Date(
+            post.created_at
+          ).getTime()
+        ) /
+          (1000 * 60 * 60)
+      );
+
+    return (
+      engagement /
+      Math.pow(
+        ageHours + 2,
+        0.55
+      )
+    );
+  }
+
+  return posts.sort((a, b) => {
+    const scoreDifference =
+      score(b) - score(a);
+
+    if (scoreDifference !== 0) {
+      return scoreDifference;
+    }
+
+    return (
+      new Date(
+        b.created_at
+      ).getTime() -
+      new Date(
+        a.created_at
+      ).getTime()
+    );
+  });
 }
 
 export async function getPost(
