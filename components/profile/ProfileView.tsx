@@ -1166,12 +1166,12 @@ export default function ProfileView({
                 alignItems: "center",
                 gap: 16,
                 padding: 10,
-                border: "1px solid rgba(0,0,0,.07)",
+                border: "1px solid var(--line)",
                 borderRadius: 22,
-                background: "rgba(255,255,255,.78)",
+               background: "var(--surface-solid)",
                 color: "inherit",
                 textDecoration: "none",
-                boxShadow: "0 12px 34px rgba(0,0,0,.055)",
+                boxShadow: "var(--shadow)",
               }}
             >
               <div
@@ -1181,7 +1181,7 @@ export default function ProfileView({
                   height: 108,
                   overflow: "hidden",
                   borderRadius: 17,
-                  background: "#ececea",
+                  background: "var(--soft)",
                   boxShadow: "0 8px 20px rgba(0,0,0,.08)",
                 }}
               >
