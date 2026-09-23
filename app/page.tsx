@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
+import PullToRefresh from "@/components/ui/PullToRefresh";
+
 import LandingPage from "@/components/landing/LandingPage";
 import PostCard from "@/components/post/PostCard";
 
@@ -91,107 +93,110 @@ if (trending) {
   <>
     <InstallPrompt signedIn />
 
-    <main className="shell">
-      <header className="topbar">
-        <div className="brand">
-          aux.
+    <PullToRefresh>
+      <main className="shell">
+        <header className="topbar">
+          <div className="brand">
+            aux.
+          </div>
+
+          <span className="pill">
+            música, ligada à vida
+          </span>
+        </header>
+
+        <section className="hero">
+          <h1>
+            o que ficou?
+          </h1>
+
+          <p>
+            Reviews para o que você
+            pensa. Memories para o
+            lugar que a música ocupou
+            na sua vida.
+          </p>
+        </section>
+
+        <div className="tabs">
+          <Link
+            className={`tab ${
+              !following && !trending
+                ? "active"
+                : ""
+            }`}
+            href="/"
+          >
+            Para você
+          </Link>
+
+          <Link
+            className={`tab ${
+              following
+                ? "active"
+                : ""
+            }`}
+            href="/?tab=following"
+          >
+            Seguindo
+          </Link>
+
+          <Link
+            className={`tab ${
+              trending
+                ? "active"
+                : ""
+            }`}
+            href="/?tab=trending"
+          >
+            Em alta
+          </Link>
         </div>
 
-        <span className="pill">
-          música, ligada à vida
-        </span>
-      </header>
-
-      <section className="hero">
-        <h1>
-          o que ficou?
-        </h1>
-
-        <p>
-          Reviews para o que você
-          pensa. Memories para o
-          lugar que a música ocupou
-          na sua vida.
-        </p>
-      </section>
-
-      <div className="tabs">
-  <Link
-    className={`tab ${
-      !following && !trending
-        ? "active"
-        : ""
-    }`}
-    href="/"
-  >
-    Para você
-  </Link>
-
-  <Link
-    className={`tab ${
-      following
-        ? "active"
-        : ""
-    }`}
-    href="/?tab=following"
-  >
-    Seguindo
-  </Link>
-
-  <Link
-    className={`tab ${
-      trending
-        ? "active"
-        : ""
-    }`}
-    href="/?tab=trending"
-  >
-    Em alta
-  </Link>
-</div>
-      {error && (
-        <div className="error">
-          {error}
-        </div>
-      )}
-
-      <section className="feed">
-        {posts.length ? (
-          posts.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              viewerId={viewer.id}
-            />
-          ))
-        ) : (
-          <div className="empty">
-            <div className="brand">
-              aux.
-            </div>
-
-            <p>
-              {following
-                ? "siga alguém para montar este feed."
-                : "seu gosto começa com uma música."}
-            </p>
-
-            <a
-              className="primary"
-              href={
-                following
-                  ? "/discover"
-                  : "/new"
-              }
-            >
-              {following
-                ? "descobrir pessoas"
-                : "adicionar primeira música"}
-            </a>
+        {error && (
+          <div className="error">
+            {error}
           </div>
         )}
-      </section>
-            </main>
-    </>
-  );
+
+        <section className="feed">
+          {posts.length ? (
+            posts.map((post) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                viewerId={viewer.id}
+              />
+            ))
+          ) : (
+            <div className="empty">
+              <div className="brand">
+                aux.
+              </div>
+
+              <p>
+                {following
+                  ? "siga alguém para montar este feed."
+                  : "seu gosto começa com uma música."}
+              </p>
+
+              <a
+                className="primary"
+                href={
+                  following
+                    ? "/discover"
+                    : "/new"
+                }
+              >
+                {following
+                  ? "descobrir pessoas"
+                  : "adicionar primeira música"}
+              </a>
+            </div>
+          )}
+        </section>
+      </main>
+    </PullToRefresh>
+  </>
+);
 }

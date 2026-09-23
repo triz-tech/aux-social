@@ -1146,47 +1146,48 @@ export default function PostActions({
               )}
             </div>
           )}
-        <span
-          aria-live="polite"
-          aria-atomic="true"
-          style={{
-            position:
-              "absolute",
-            left: "50%",
-            bottom: -22,
-            zIndex: 3,
-            transform:
-              "translateX(-50%)",
-            maxWidth: 220,
-            overflow:
-              "hidden",
-            color:
-              actionFeedback.includes(
-                "não consegui"
-              )
-                ? "#a83a32"
-                : "#767670",
-            fontSize: 10,
-            fontWeight: 600,
-            textOverflow:
-              "ellipsis",
-            whiteSpace:
-              "nowrap",
-            pointerEvents:
-              "none",
-            opacity:
-              actionFeedback
-                ? 1
-                : 0,
-            transition:
-              "opacity 160ms ease",
-          }}
-        >
-          {actionFeedback}
-        </span>
-      </div>
 
+      </div>
+<div
+  aria-live="polite"
+  aria-atomic="true"
+  style={{
+    minHeight: 20,
+    marginTop: 3,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    pointerEvents: "none",
+  }}
+>
+  <span
+    style={{
+      maxWidth: 240,
+      color:
+        actionFeedback.includes(
+          "não consegui"
+        )
+          ? "#a83a32"
+          : "#767670",
+      fontSize: 10,
+      fontWeight: 600,
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      opacity:
+        actionFeedback
+          ? 1
+          : 0,
+      transition:
+        "opacity 160ms ease",
+    }}
+  >
+    {actionFeedback}
+  </span>
+</div>
       {/* COMMENTS */}
+
+      
 
       <CommentsSheet
         postId={post.id}
