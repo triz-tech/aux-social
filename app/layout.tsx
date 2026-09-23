@@ -1,9 +1,11 @@
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type {
   Metadata,
   Viewport,
 } from "next";
 
 import "./globals.css";
+
 
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 import InteractionGuard from "@/components/ui/InteractionGuard";
@@ -107,6 +109,7 @@ const supabase =
   return (
     <html lang="pt-BR">
       <body>
+        <SpeedInsights />
         <InteractionGuard />
         <InstallPrompt signedIn={signedIn} />
 

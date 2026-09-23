@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { IS_DEMO } from "@/lib/config";
 import { createClient } from "@/lib/supabase/client";
 import TopFiveEditor from "@/components/profile/TopFiveEditor";
+import AvatarCropper from "@/components/profile/AvatarCropper";
 
 export default function Settings() {
   const router = useRouter();
@@ -29,6 +30,9 @@ export default function Settings() {
 
   const [avatarPreview, setAvatarPreview] =
     useState<string | null>(null);
+
+  const [avatarToCrop, setAvatarToCrop] =
+  useState<string | null>(null);  
 
   const [loading, setLoading] =
     useState(true);
@@ -140,52 +144,37 @@ export default function Settings() {
    * =====================================================
    */
 
-  function chooseAvatar(
-    file: File | undefined
-  ) {
-    if (!file) return;
+function chooseAvatar(
+  file: File | undefined
+) {
+  if (!file) return;
 
-    setError("");
-    setMsg("");
+  setError("");
+  setMsg("");
 
-    if (
-      !file.type.startsWith(
-        "image/"
-      )
-    ) {
-      setError(
-        "Escolha uma imagem."
-      );
+  if (!file.type.startsWith("image/")) {
+    setError("Escolha uma imagem.");
+    return;
+  }
 
-      return;
-    }
+  if (file.size > 5_000_000) {
+    setError(
+      "A foto pode ter no máximo 5 MB."
+    );
+    return;
+  }
 
-    if (
-      file.size >
-      5_000_000
-    ) {
-      setError(
-        "A foto pode ter no máximo 5 MB."
-      );
-
-      return;
-    }
-
-    setNewAvatar(file);
-
-    if (avatarPreview) {
-      URL.revokeObjectURL(
-        avatarPreview
-      );
-    }
-
-    setAvatarPreview(
-      URL.createObjectURL(
-        file
-      )
+  if (avatarToCrop) {
+    URL.revokeObjectURL(
+      avatarToCrop
     );
   }
 
+  const imageUrl =
+    URL.createObjectURL(file);
+
+  setAvatarToCrop(imageUrl);
+}
   /*
    * =====================================================
    * SALVAR PERFIL
@@ -400,6 +389,37 @@ export default function Settings() {
 
   return (
     <main className="shell settingsPage">
+
+      {avatarToCrop && (
+  <AvatarCropper
+    image={avatarToCrop}
+    onCancel={() => {
+      URL.revokeObjectURL(
+        avatarToCrop
+      );
+
+      setAvatarToCrop(null);
+    }}
+    onSave={(
+      file,
+      preview
+    ) => {
+      if (avatarPreview) {
+        URL.revokeObjectURL(
+          avatarPreview
+        );
+      }
+
+      URL.revokeObjectURL(
+        avatarToCrop
+      );
+
+      setNewAvatar(file);
+      setAvatarPreview(preview);
+      setAvatarToCrop(null);
+    }}
+  />
+)}
       <header className="topbar">
         <div className="brand">
           aux.
@@ -480,20 +500,18 @@ export default function Settings() {
               ? "trocar foto"
               : "adicionar foto"}
 
-            <input
-              hidden
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/heic"
-              onChange={(
-                event
-              ) =>
-                chooseAvatar(
-                  event
-                    .target
-                    .files?.[0]
-                )
-              }
-            />
+<input
+  hidden
+  type="file"
+  accept="image/jpeg,image/png,image/webp"
+  onChange={(event) => {
+    chooseAvatar(
+      event.target.files?.[0]
+    );
+
+    event.target.value = "";
+  }}
+/>
           </label>
         </div>
 
