@@ -3,21 +3,15 @@ import type {
   Metadata,
   Viewport,
 } from "next";
+import { Suspense } from "react";
 
 import "./globals.css";
 
-
-import InstallPrompt from "@/components/pwa/InstallPrompt";
-import InteractionGuard from "@/components/ui/InteractionGuard";
-import AppNavigation from "@/components/navigation/AppNavigation";
-
+import NavigationServer from "@/components/navigation/NavigationServer";
 
 import {
   APP_NAME,
-  IS_DEMO,
 } from "@/lib/config";
-
-import { getViewer } from "@/lib/auth/viewer";
 
 export const metadata: Metadata = {
   title: {
@@ -59,30 +53,21 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const viewer =
-  await getViewer();
-
   return (
     <html lang="pt-BR">
       <body>
         <SpeedInsights />
-        <InteractionGuard />
-        <InstallPrompt
-  signedIn={viewer.signedIn}
-/>
 
         {children}
 
-<AppNavigation
-  signedIn={viewer.signedIn}
-  viewerId={viewer.id}
-  username={viewer.username}
-/>
+        <Suspense fallback={null}>
+          <NavigationServer />
+        </Suspense>
       </body>
     </html>
   );

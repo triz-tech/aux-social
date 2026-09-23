@@ -8,6 +8,7 @@ import { IS_DEMO } from "@/lib/config";
 import { demoPosts } from "@/lib/data/demo";
 import { getFeed } from "@/lib/data/queries";
 import { getViewer } from "@/lib/auth/viewer";
+import InstallPrompt from "@/components/pwa/InstallPrompt";
 
 export default async function Home({
   searchParams,
@@ -58,10 +59,11 @@ if (!viewer.signedIn) {
 
   if (!IS_DEMO) {
     try {
-      posts =
-        await getFeed(
-          following
-        );
+posts =
+  await getFeed(
+    following,
+    viewer.id
+  );
     } catch (err) {
       posts = [];
 
@@ -73,6 +75,9 @@ if (!viewer.signedIn) {
   }
 
   return (
+  <>
+    <InstallPrompt signedIn />
+
     <main className="shell">
       <header className="topbar">
         <div className="brand">
@@ -163,6 +168,7 @@ if (!viewer.signedIn) {
           </div>
         )}
       </section>
-    </main>
+            </main>
+    </>
   );
 }
